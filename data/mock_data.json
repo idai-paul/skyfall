@@ -1,0 +1,129 @@
+{
+  "trust_score": 86,
+  "metrics": {
+    "active_alerts": 12,
+    "high_severity": 3,
+    "investigations": 7,
+    "behavior_changes": 16
+  },
+  "alerts": [
+    {
+      "id": "A001",
+      "title": "SUSPICIOUS WEEKEND ACCESS PATTERN",
+      "description": "ML RESEARCHER ACCESSING SENSITIVE MODEL REPO",
+      "timestamp": "2025-02-28T11:32:15",
+      "source": "MODEL: DEV-GPT4",
+      "severity": "high"
+    },
+    {
+      "id": "A002",
+      "title": "UNUSUAL DATA EXFILTRATION ATTEMPT",
+      "description": "CHECKPOINT TRANSFER TO UNAUTHORIZED LOCATION",
+      "timestamp": "2025-02-28T09:47:02",
+      "source": "USER: J.SMITH",
+      "severity": "high"
+    },
+    {
+      "id": "A003",
+      "title": "BEHAVIORAL ANOMALY DETECTED",
+      "description": "SHIFTED WORK PATTERN - WEEKEND ACTIVITY",
+      "timestamp": "2025-02-28T08:15:55",
+      "source": "USER: L.JOHNSON",
+      "severity": "medium"
+    }
+  ],
+  "investigations": [
+    {
+      "id": "INV-2025-042",
+      "title": "MODEL WEIGHTS MANIPULATION ATTEMPT",
+      "subject": "JOHN DOE (ML RESEARCHER)",
+      "reported": "2025-02-27T23:12:47",
+      "status": "IN PROGRESS - COLLECTING EVIDENCE",
+      "priority": "HIGH",
+      "stage": "ANALYSIS",
+      "events": [
+        {
+          "timestamp": "2025-02-27T18:45:00",
+          "description": "UNUSUAL ACCESS PATTERN DETECTED"
+        },
+        {
+          "timestamp": "2025-02-27T22:30:00",
+          "description": "ANOMALOUS MODEL CHECKPOINT CREATION"
+        },
+        {
+          "timestamp": "2025-02-28T06:15:00",
+          "description": "ATTEMPTED ACCESS FROM NEW SUBNET"
+        }
+      ]
+    },
+    {
+      "id": "INV-2025-039",
+      "title": "UNUSUAL ACCESS PATTERN TO CUSTOMER DATABASE",
+      "subject": "SARAH JOHNSON (DATA ANALYST)",
+      "reported": "2025-02-26T14:35:22",
+      "status": "IN PROGRESS - GATHERING EVIDENCE",
+      "priority": "MEDIUM",
+      "stage": "EVIDENCE",
+      "events": [
+        {
+          "timestamp": "2025-02-26T10:12:00",
+          "description": "UNUSUAL DATABASE QUERY PATTERN DETECTED"
+        },
+        {
+          "timestamp": "2025-02-26T13:45:00",
+          "description": "LARGE DATA EXPORT OPERATION INITIATED"
+        },
+        {
+          "timestamp": "2025-02-27T09:30:00",
+          "description": "SUBJECT QUESTIONED ABOUT ACTIVITY"
+        }
+      ]
+    },
+    {
+      "id": "INV-2025-037",
+      "title": "UNAUTHORIZED API KEY GENERATION",
+      "subject": "MICHAEL CHEN (BACKEND DEVELOPER)",
+      "reported": "2025-02-25T08:17:33",
+      "status": "ACTIVE - IMPLEMENTING CONTROLS",
+      "priority": "MEDIUM",
+      "stage": "CONTAINMENT",
+      "events": [
+        {
+          "timestamp": "2025-02-24T22:05:00",
+          "description": "UNAUTHORIZED API KEY CREATED"
+        },
+        {
+          "timestamp": "2025-02-25T07:30:00",
+          "description": "API KEY USED FROM EXTERNAL NETWORK"
+        },
+        {
+          "timestamp": "2025-02-25T15:45:00",
+          "description": "API KEY REVOKED AND ACCESS BLOCKED"
+        }
+      ]
+    },
+    {
+      "id": "INV-2025-035",
+      "title": "ANOMALOUS LOGIN PATTERN FROM REMOTE LOCATION",
+      "subject": "LISA PARKER (PRODUCT MANAGER)",
+      "reported": "2025-02-23T19:42:15",
+      "status": "UNDER OBSERVATION",
+      "priority": "LOW",
+      "stage": "MONITORING",
+      "events": [
+        {
+          "timestamp": "2025-02-23T16:20:00",
+          "description": "LOGIN FROM UNRECOGNIZED IP ADDRESS"
+        },
+        {
+          "timestamp": "2025-02-23T18:15:00",
+          "description": "SUBJECT CONFIRMED TRAVEL STATUS"
+        },
+        {
+          "timestamp": "2025-02-24T10:30:00",
+          "description": "ENHANCED MONITORING IMPLEMENTED"
+        }
+      ]
+    }
+  ]
+}

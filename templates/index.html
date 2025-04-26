@@ -1,0 +1,612 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unsupervised Person Re-identification System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            font-family: monospace;
+        }
+        
+        .camera-feed {
+            background-color: #000;
+            border: 1px solid #333;
+            height: 220px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .camera-feed img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .camera-info {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 5px;
+            font-size: 12px;
+            border-radius: 3px;
+        }
+        
+        .detection-box {
+            position: absolute;
+            border: 2px solid;
+            box-sizing: border-box;
+        }
+        
+        .detection-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            position: absolute;
+            transform: translate(-50%, -50%);
+        }
+        
+        .timeline-event {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .timeline-event::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4299e1;
+        }
+        
+        .timeline-event::after {
+            content: '';
+            position: absolute;
+            left: 3px;
+            top: 16px;
+            bottom: -15px;
+            width: 2px;
+            background: #2d3748;
+        }
+        
+        .timeline-event:last-child::after {
+            display: none;
+        }
+        
+        /* Map styling */
+        .facility-map {
+            position: relative;
+            height: 400px;
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+        }
+        
+        .map-room {
+            position: absolute;
+            border: 1px solid #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #666;
+        }
+        
+        .person-path {
+            position: absolute;
+            z-index: 10;
+        }
+        
+        /* Pulse animation for current location */
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-black border-b border-gray-800 p-3 flex justify-between items-center">
+            <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <h1 class="text-xl font-bold tracking-wider">UNSUPERVISED PERSON RE-ID SYSTEM</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div id="status-indicator" class="flex items-center text-sm">
+                    <span class="inline-block w-3 h-3 rounded-full bg-green-500 mr-2"></span>
+                    <span>System Active</span>
+                </div>
+                <div id="current-time" class="text-sm"></div>
+            </div>
+        </header>
+        
+        <!-- Main content -->
+        <div class="flex flex-1">
+            <!-- Left sidebar - Person clusters -->
+            <div class="w-80 bg-gray-900 p-4 overflow-y-auto border-r border-gray-800 h-screen">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm uppercase tracking-wider text-gray-400 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Auto-Clustered Identities
+                    </h2>
+                    <div id="total-clusters" class="text-xs text-gray-500">Total: 0</div>
+                </div>
+                
+                <!-- Person clusters list -->
+                <div id="person-clusters" class="space-y-3">
+                    <!-- Person clusters will be populated here via JavaScript -->
+                    <div class="text-center text-gray-500 py-10">
+                        Loading clusters...
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main area -->
+            <div class="flex-1 flex flex-col">
+                <!-- Facility map with tracking -->
+                <div class="p-4">
+                    <div class="bg-gray-900 p-3 rounded border border-gray-800 mb-4">
+                        <h2 class="text-sm uppercase tracking-wider text-gray-400 flex items-center mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                            </svg>
+                            Facility Map & Movement Tracking
+                        </h2>
+                        
+                        <div id="facility-map" class="facility-map">
+                            <!-- Map areas -->
+                            <div class="map-room" style="top: 10%; left: 10%; width: 20%; height: 15%;">Entrance A</div>
+                            <div class="map-room" style="top: 10%; left: 40%; width: 20%; height: 15%;">Lobby</div>
+                            <div class="map-room" style="top: 30%; left: 10%; width: 30%; height: 20%;">Hallway A</div>
+                            <div class="map-room" style="top: 30%; left: 60%; width: 30%; height: 20%;">Hallway B</div>
+                            <div class="map-room" style="top: 60%; left: 30%; width: 20%; height: 20%;">Cafeteria</div>
+                            <div class="map-room" style="top: 60%; left: 60%; width: 20%; height: 20%;">Meeting Room</div>
+                            <div class="map-room" style="top: 85%; left: 10%; width: 15%; height: 10%;">Exit 1</div>
+                            <div class="map-room" style="top: 85%; left: 75%; width: 15%; height: 10%;">Exit 2</div>
+                            
+                            <!-- Person trajectories will be added here via JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Camera grid -->
+                    <div class="bg-gray-900 p-3 rounded border border-gray-800">
+                        <h2 class="text-sm uppercase tracking-wider text-gray-400 flex items-center mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Live Camera Feeds
+                        </h2>
+                        
+                        <div id="camera-grid" class="grid grid-cols-3 gap-4">
+                            <!-- Camera feeds will be populated here via JavaScript -->
+                            {% for camera_id, camera_info in cameras.items() %}
+                            <div class="camera-feed">
+                                <img src="{{ url_for('video_feed', camera_id=camera_id) }}" alt="{{ camera_info.name }}">
+                                <div class="camera-info">
+                                    <div>{{ camera_info.name }} ({{ camera_id }})</div>
+                                    <div class="text-xs text-gray-500" id="detection-count-{{ camera_id }}">Detections: 0</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right sidebar - Details panel -->
+            <div class="w-80 bg-gray-900 p-4 border-l border-gray-800 overflow-y-auto h-screen">
+                <!-- Selected person details -->
+                <div id="person-details" class="hidden">
+                    <h2 class="text-sm uppercase tracking-wider text-gray-400 flex items-center mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Person Details
+                    </h2>
+                    
+                    <div class="bg-gray-800 p-3 rounded border border-gray-700 mb-4">
+                        <div class="flex justify-between items-center">
+                            <div class="text-sm font-semibold" id="details-title">Person #1</div>
+                            <div class="text-xs bg-black px-2 py-0.5 rounded" id="details-confidence">
+                                95% match
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2 text-xs text-gray-400 mt-3">
+                            <div>
+                                <span class="block text-gray-500">First seen:</span>
+                                <span id="details-first-seen">--:--:--</span>
+                            </div>
+                            <div>
+                                <span class="block text-gray-500">Last seen:</span>
+                                <span id="details-last-seen">--:--:--</span>
+                            </div>
+                            <div>
+                                <span class="block text-gray-500">Appearances:</span>
+                                <span id="details-appearances">0</span>
+                            </div>
+                            <div>
+                                <span class="block text-gray-500">Gait score:</span>
+                                <span id="details-gait-score">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Feature analysis -->
+                    <h2 class="text-sm uppercase tracking-wider text-gray-400 flex items-center mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                        </svg>
+                        Feature Analysis
+                    </h2>
+                    
+                    <div class="bg-gray-800 p-3 rounded border border-gray-700 mb-4">
+                        <div class="text-xs mb-3">
+                            <div class="text-gray-500 mb-1">Visual Signatures</div>
+                            <div id="details-features" class="flex flex-wrap gap-1">
+                                <!-- Features will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <div class="text-xs mb-3">
+                            <div class="text-gray-500 mb-1">Biometric Confidence</div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div id="details-biometric-bar" class="h-2 rounded-full bg-blue-500" style="width: 0%"></div>
+                            </div>
+                            <div class="flex justify-between text-xs mt-1">
+                                <span>Face: Partial</span>
+                                <span id="details-biometric-score">0%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="text-xs">
+                            <div class="text-gray-500 mb-1">Gait Analysis</div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div id="details-gait-bar" class="h-2 rounded-full bg-green-500" style="width: 0%"></div>
+                            </div>
+                            <div class="flex justify-between text-xs mt-1">
+                                <span>Motion signature</span>
+                                <span id="details-gait-score-2">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline -->
+                    <h2 class="text-sm uppercase tracking-wider text-gray-400 flex items-center mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Movement Timeline
+                    </h2>
+                    
+                    <div class="bg-gray-800 p-3 rounded border border-gray-700">
+                        <div id="details-timeline" class="text-xs">
+                            <!-- Timeline events will be populated here -->
+                            <div class="text-center text-gray-500 py-4">No timeline data available</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- No person selected state -->
+                <div id="no-person-selected" class="text-center py-10 text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <p>Select a person cluster to view details</p>
+                </div>
+                
+                <!-- System info section -->
+                <div class="mt-8 border-t border-gray-800 pt-4">
+                    <h2 class="text-sm uppercase tracking-wider text-gray-400 flex items-center mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        System Information
+                    </h2>
+                    
+                    <div class="bg-black bg-opacity-40 p-2 rounded text-xs">
+                        <div class="flex justify-between py-1">
+                            <span>Re-ID Algorithm:</span>
+                            <span>Unsupervised</span>
+                        </div>
+                        <div class="flex justify-between py-1">
+                            <span>Feature Extractor:</span>
+                            <span>ResNet-50</span>
+                        </div>
+                        <div class="flex justify-between py-1">
+                            <span>Clustering Method:</span>
+                            <span>DBSCAN+Temporal</span>
+                        </div>
+                        <div class="flex justify-between py-1">
+                            <span>Processing Mode:</span>
+                            <span>Real-time</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // JavaScript will be added here to handle the dynamic content and interaction
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update the current time display
+            function updateTime() {
+                const now = new Date();
+                document.getElementById('current-time').textContent = now.toLocaleTimeString();
+            }
+            
+            // Update time initially and then every second
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // Selected cluster ID
+            let selectedClusterId = null;
+            
+            // Function to fetch and update person clusters
+            function updatePersonClusters() {
+                fetch('/api/clusters')
+                    .then(response => response.json())
+                    .then(clusters => {
+                        const clusterContainer = document.getElementById('person-clusters');
+                        const totalClustersElement = document.getElementById('total-clusters');
+                        
+                        // Update total count
+                        totalClustersElement.textContent = `Total: ${Object.keys(clusters).length}`;
+                        
+                        // Clear existing content if clusters exist
+                        if (Object.keys(clusters).length > 0) {
+                            clusterContainer.innerHTML = '';
+                        }
+                        
+                        // Add each cluster
+                        for (const [id, cluster] of Object.entries(clusters)) {
+                            const clusterElement = document.createElement('div');
+                            clusterElement.className = `p-3 rounded cursor-pointer bg-gray-800 hover:bg-gray-750 border border-gray-700 ${selectedClusterId === id ? 'ring-1 ring-blue-500' : ''}`;
+                            clusterElement.style.borderLeft = `4px solid ${cluster.color}`;
+                            clusterElement.onclick = () => selectCluster(id);
+                            
+                            clusterElement.innerHTML = `
+                                <div class="flex justify-between items-center mb-1">
+                                    <div class="text-sm font-semibold">Person #${cluster.id}</div>
+                                    <div class="text-xs bg-black px-2 py-0.5 rounded">
+                                        ${cluster.confidence}% match
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-2 text-xs text-gray-400 mt-2">
+                                    <div>
+                                        <span class="block text-gray-500">First seen:</span>
+                                        ${cluster.firstSeen}
+                                    </div>
+                                    <div>
+                                        <span class="block text-gray-500">Last seen:</span>
+                                        ${cluster.lastSeen}
+                                    </div>
+                                    <div>
+                                        <span class="block text-gray-500">Appearances:</span>
+                                        ${cluster.appearances}
+                                    </div>
+                                    <div>
+                                        <span class="block text-gray-500">Gait score:</span>
+                                        ${cluster.gaitScore}%
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-2 text-xs">
+                                    <span class="block text-gray-500">Path:</span>
+                                    <div class="flex flex-wrap gap-1 mt-1">
+                                        ${cluster.locations.map((loc, i) => `
+                                            <span class="bg-gray-900 px-1 text-xs rounded">
+                                                ${i > 0 ? '<span class="text-gray-600 mr-1">→</span>' : ''}
+                                                ${loc}
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `;
+                            
+                            clusterContainer.appendChild(clusterElement);
+                        }
+                        
+                        // Update facility map with person trajectories
+                        updateFacilityMap(clusters);
+                    })
+                    .catch(error => console.error('Error fetching clusters:', error));
+            }
+            
+            // Function to select a cluster and show details
+            function selectCluster(clusterId) {
+                selectedClusterId = clusterId;
+                
+                // Update selected state in cluster list
+                document.querySelectorAll('#person-clusters > div').forEach(el => {
+                    if (el.onclick && el.onclick.toString().includes(clusterId)) {
+                        el.classList.add('ring-1', 'ring-blue-500');
+                    } else {
+                        el.classList.remove('ring-1', 'ring-blue-500');
+                    }
+                });
+                
+                // Fetch cluster details
+                fetch(`/api/cluster/${clusterId}`)
+                    .then(response => response.json())
+                    .then(cluster => {
+                        // Show details panel, hide empty state
+                        document.getElementById('person-details').classList.remove('hidden');
+                        document.getElementById('no-person-selected').classList.add('hidden');
+                        
+                        // Update details
+                        document.getElementById('details-title').textContent = `Person #${cluster.id}`;
+                        document.getElementById('details-confidence').textContent = `${cluster.confidence}% match`;
+                        document.getElementById('details-first-seen').textContent = cluster.firstSeen;
+                        document.getElementById('details-last-seen').textContent = cluster.lastSeen;
+                        document.getElementById('details-appearances').textContent = cluster.appearances;
+                        document.getElementById('details-gait-score').textContent = `${cluster.gaitScore}%`;
+                        
+                        // Update feature display
+                        const featuresContainer = document.getElementById('details-features');
+                        featuresContainer.innerHTML = '';
+                        cluster.visualFeatures.forEach(feature => {
+                            const featureElement = document.createElement('span');
+                            featureElement.className = 'bg-gray-700 px-2 py-0.5 text-xs rounded';
+                            featureElement.textContent = feature;
+                            featuresContainer.appendChild(featureElement);
+                        });
+                        
+                        // Update biometric and gait score bars
+                        document.getElementById('details-biometric-score').textContent = `${cluster.biometricScore}%`;
+                        document.getElementById('details-biometric-bar').style.width = `${cluster.biometricScore}%`;
+                        document.getElementById('details-biometric-bar').style.backgroundColor = cluster.color;
+                        
+                        document.getElementById('details-gait-score-2').textContent = `${cluster.gaitScore}%`;
+                        document.getElementById('details-gait-bar').style.width = `${cluster.gaitScore}%`;
+                        document.getElementById('details-gait-bar').style.backgroundColor = cluster.color;
+                        
+                        // Update timeline
+                        const timelineContainer = document.getElementById('details-timeline');
+                        timelineContainer.innerHTML = '';
+                        
+                        if (cluster.locations.length > 0) {
+                            cluster.locations.forEach((location, index) => {
+                                const timeElement = document.createElement('div');
+                                timeElement.className = 'timeline-event';
+                                
+                                // Generate a pseudo timestamp based on first and last seen times
+                                const firstParts = cluster.firstSeen.split(':').map(Number);
+                                const lastParts = cluster.lastSeen.split(':').map(Number);
+                                
+                                const firstTime = new Date();
+                                firstTime.setHours(firstParts[0], firstParts[1], firstParts[2] || 0);
+                                
+                                const lastTime = new Date();
+                                lastTime.setHours(lastParts[0], lastParts[1], lastParts[2] || 0);
+                                
+                                const timeDiff = (lastTime - firstTime) / (cluster.locations.length - 1);
+                                const eventTime = new Date(firstTime.getTime() + index * timeDiff);
+                                
+                                timeElement.style.setProperty('--dot-color', cluster.color);
+                                timeElement.innerHTML = `
+                                    <div class="font-mono" style="color: ${cluster.color}">
+                                        ${eventTime.toLocaleTimeString('en-US', { hour12: false })}
+                                    </div>
+                                    <div class="mt-1">${location}</div>
+                                `;
+                                
+                                timelineContainer.appendChild(timeElement);
+                            });
+                        } else {
+                            timelineContainer.innerHTML = '<div class="text-center text-gray-500 py-4">No timeline data available</div>';
+                        }
+                    })
+                    .catch(error => console.error('Error fetching cluster details:', error));
+            }
+            
+            // Function to update the facility map with person trajectories
+            function updateFacilityMap(clusters) {
+                const mapElement = document.getElementById('facility-map');
+                
+                // Remove existing trajectories
+                document.querySelectorAll('.person-path').forEach(el => el.remove());
+                
+                // Room coordinates (center points) for the map
+                const roomCoordinates = {
+                    'Entrance A': { x: 20, y: 17 },
+                    'Lobby': { x: 50, y: 17 },
+                    'Hallway A': { x: 25, y: 40 },
+                    'Hallway B': { x: 75, y: 40 },
+                    'Hallway C': { x: 50, y: 40 },
+                    'Conference Room': { x: 25, y: 70 },
+                    'Meeting Room B': { x: 75, y: 70 },
+                    'Cafeteria': { x: 40, y: 70 },
+                    'Elevator': { x: 50, y: 50 },
+                    'Floor 3': { x: 50, y: 30 },
+                    'Office 312': { x: 70, y: 30 },
+                    'Exit 1': { x: 17, y: 90 },
+                    'Exit 2': { x: 83, y: 90 },
+                    'Side entrance': { x: 90, y: 17 }
+                };
+                
+                // Create SVG paths for each person cluster
+                for (const [id, cluster] of Object.entries(clusters)) {
+                    if (cluster.locations.length < 2) continue;
+                    
+                    // Create SVG element
+                    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    svg.classList.add('person-path');
+                    svg.setAttribute('width', '100%');
+                    svg.setAttribute('height', '100%');
+                    svg.style.position = 'absolute';
+                    svg.style.top = '0';
+                    svg.style.left = '0';
+                    
+                    // Create path element
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    
+                    // Build path data
+                    let pathData = '';
+                    cluster.locations.forEach((location, index) => {
+                        const coords = roomCoordinates[location] || { x: 50, y: 50 };
+                        if (index === 0) {
+                            pathData += `M ${coords.x} ${coords.y}`;
+                        } else {
+                            pathData += ` L ${coords.x} ${coords.y}`;
+                        }
+                    });
+                    
+                    path.setAttribute('d', pathData);
+                    path.setAttribute('stroke', cluster.color);
+                    path.setAttribute('stroke-width', '2');
+                    path.setAttribute('fill', 'none');
+                    path.setAttribute('stroke-dasharray', id === selectedClusterId ? 'none' : '5,5');
+                    svg.appendChild(path);
+                    
+                    // Add points for each location
+                    cluster.locations.forEach((location, index) => {
+                        const coords = roomCoordinates[location] || { x: 50, y: 50 };
+                        const isLast = index === cluster.locations.length - 1;
+                        
+                        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        circle.setAttribute('cx', coords.x);
+                        circle.setAttribute('cy', coords.y);
+                        circle.setAttribute('r', isLast ? '5' : '3');
+                        circle.setAttribute('fill', cluster.color);
+                        
+                        if (isLast) {
+                            circle.classList.add('pulse');
+                        }
+                        
+                        svg.appendChild(circle);
+                    });
+                    
+                    mapElement.appendChild(svg);
+                }
+            }
+            
+            // Update clusters initially and then every 2 seconds
+            updatePersonClusters();
+            setInterval(updatePersonClusters, 2000);
+        });
+    </script>
+</body>
+</html>
