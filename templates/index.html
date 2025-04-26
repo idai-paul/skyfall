@@ -200,11 +200,21 @@
                         <div id="camera-grid" class="grid grid-cols-3 gap-4">
                             <!-- Camera feeds will be populated here via JavaScript -->
                             {% for camera_id, camera_info in cameras.items() %}
-                            <div class="camera-feed">
-                                <img src="{{ url_for('video_feed', camera_id=camera_id) }}" alt="{{ camera_info.name }}">
+                            <div class="camera-feed" id="camera-feed-{{ camera_id }}">
+                                <img src="{{ url_for('video_feed', camera_id=camera_id) }}" alt="{{ camera_info.name }}" 
+                                     onerror="handleCameraError('{{ camera_id }}')" 
+                                     onload="handleCameraLoad('{{ camera_id }}')">
                                 <div class="camera-info">
                                     <div>{{ camera_info.name }} ({{ camera_id }})</div>
                                     <div class="text-xs text-gray-500" id="detection-count-{{ camera_id }}">Detections: 0</div>
+                                </div>
+                                <div class="camera-status hidden" id="camera-status-{{ camera_id }}">
+                                    <div class="text-center text-gray-500 py-4">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                        <p>No signal available</p>
+                                    </div>
                                 </div>
                             </div>
                             {% endfor %}
@@ -363,6 +373,66 @@
             // Selected cluster ID
             let selectedClusterId = null;
             
+            // Track active cameras
+            const activeCameras = new Set();
+            
+            // Function to handle camera errors (no signal)
+            window.handleCameraError = function(cameraId) {
+                const cameraFeed = document.getElementById(`camera-feed-${cameraId}`);
+                const cameraStatus = document.getElementById(`camera-status-${cameraId}`);
+                const cameraImg = cameraFeed.querySelector('img');
+                
+                // Hide the image and show the status message
+                cameraImg.classList.add('hidden');
+                cameraStatus.classList.remove('hidden');
+                
+                // Remove from active cameras
+                activeCameras.delete(cameraId);
+                
+                // Update the camera grid layout
+                updateCameraGridLayout();
+            };
+            
+            // Function to handle camera load (signal available)
+            window.handleCameraLoad = function(cameraId) {
+                const cameraFeed = document.getElementById(`camera-feed-${cameraId}`);
+                const cameraStatus = document.getElementById(`camera-status-${cameraId}`);
+                const cameraImg = cameraFeed.querySelector('img');
+                
+                // Show the image and hide the status message
+                cameraImg.classList.remove('hidden');
+                cameraStatus.classList.add('hidden');
+                
+                // Add to active cameras
+                activeCameras.add(cameraId);
+                
+                // Update the camera grid layout
+                updateCameraGridLayout();
+            };
+            
+            // Function to update the camera grid layout based on active cameras
+            function updateCameraGridLayout() {
+                const cameraGrid = document.getElementById('camera-grid');
+                
+                // If no active cameras, show a message
+                if (activeCameras.size === 0) {
+                    cameraGrid.innerHTML = `
+                        <div class="col-span-3 text-center py-10 text-gray-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <p class="text-lg">No camera feeds available</p>
+                            <p class="text-sm mt-2">Please check your camera connections</p>
+                        </div>
+                    `;
+                } else {
+                    // Restore the original grid if it was replaced
+                    if (cameraGrid.children.length === 1 && cameraGrid.children[0].classList.contains('col-span-3')) {
+                        location.reload(); // Simple way to restore the original grid
+                    }
+                }
+            }
+            
             // Function to fetch and update person clusters
             function updatePersonClusters() {
                 fetch('/api/clusters')
@@ -374,9 +444,21 @@
                         // Update total count
                         totalClustersElement.textContent = `Total: ${Object.keys(clusters).length}`;
                         
-                        // Clear existing content if clusters exist
-                        if (Object.keys(clusters).length > 0) {
-                            clusterContainer.innerHTML = '';
+                        // Clear existing content
+                        clusterContainer.innerHTML = '';
+                        
+                        // If no clusters, show a message
+                        if (Object.keys(clusters).length === 0) {
+                            clusterContainer.innerHTML = `
+                                <div class="text-center text-gray-500 py-10">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                    <p>No person clusters detected</p>
+                                    <p class="text-sm mt-2">Waiting for camera feeds to process...</p>
+                                </div>
+                            `;
+                            return;
                         }
                         
                         // Add each cluster
@@ -450,7 +532,12 @@
                 
                 // Fetch cluster details
                 fetch(`/api/cluster/${clusterId}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Cluster not found');
+                        }
+                        return response.json();
+                    })
                     .then(cluster => {
                         // Show details panel, hide empty state
                         document.getElementById('person-details').classList.remove('hidden');
@@ -487,7 +574,7 @@
                         const timelineContainer = document.getElementById('details-timeline');
                         timelineContainer.innerHTML = '';
                         
-                        if (cluster.locations.length > 0) {
+                        if (cluster.locations && cluster.locations.length > 0) {
                             cluster.locations.forEach((location, index) => {
                                 const timeElement = document.createElement('div');
                                 timeElement.className = 'timeline-event';
@@ -519,7 +606,22 @@
                             timelineContainer.innerHTML = '<div class="text-center text-gray-500 py-4">No timeline data available</div>';
                         }
                     })
-                    .catch(error => console.error('Error fetching cluster details:', error));
+                    .catch(error => {
+                        console.error('Error fetching cluster details:', error);
+                        // Show error message in the details panel
+                        document.getElementById('person-details').classList.remove('hidden');
+                        document.getElementById('no-person-selected').classList.add('hidden');
+                        
+                        document.getElementById('details-title').textContent = 'Error';
+                        document.getElementById('details-confidence').textContent = 'N/A';
+                        document.getElementById('details-first-seen').textContent = 'N/A';
+                        document.getElementById('details-last-seen').textContent = 'N/A';
+                        document.getElementById('details-appearances').textContent = 'N/A';
+                        document.getElementById('details-gait-score').textContent = 'N/A';
+                        
+                        const timelineContainer = document.getElementById('details-timeline');
+                        timelineContainer.innerHTML = '<div class="text-center text-gray-500 py-4">Error loading person details</div>';
+                    });
             }
             
             // Function to update the facility map with person trajectories
@@ -528,6 +630,34 @@
                 
                 // Remove existing trajectories
                 document.querySelectorAll('.person-path').forEach(el => el.remove());
+                
+                // If no clusters with trajectories, show a message
+                const clustersWithTrajectories = Object.values(clusters).filter(cluster => cluster.locations && cluster.locations.length > 1);
+                if (clustersWithTrajectories.length === 0) {
+                    // Check if the message already exists
+                    if (!document.getElementById('no-trajectories-message')) {
+                        const messageElement = document.createElement('div');
+                        messageElement.id = 'no-trajectories-message';
+                        messageElement.className = 'absolute inset-0 flex items-center justify-center text-gray-500';
+                        messageElement.innerHTML = `
+                            <div class="text-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                </svg>
+                                <p>No person trajectories available</p>
+                                <p class="text-sm mt-2">Waiting for camera feeds to process...</p>
+                            </div>
+                        `;
+                        mapElement.appendChild(messageElement);
+                    }
+                    return;
+                }
+                
+                // Remove the message if it exists
+                const messageElement = document.getElementById('no-trajectories-message');
+                if (messageElement) {
+                    messageElement.remove();
+                }
                 
                 // Room coordinates (center points) for the map
                 const roomCoordinates = {
