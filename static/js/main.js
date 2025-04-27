@@ -5,369 +5,529 @@
  * including real-time updates, user interactions, and animations.
  */
 
+// Global variables
+let map;
+let markers = [];
+let currentCamera = null;
+let videoStreams = {};
+let streamManager = null;
+
+// Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize real-time clock
-    initializeClock();
+    console.log('Initializing Skyfall Platform...');
     
-    // Initialize subjects clicking
-    initializeSubjectSelection();
+    // Initialize the map
+    initMap();
     
-    // For demonstration purposes, simulate camera feeds
-    simulateCameraFeeds();
+    // Initialize the stream manager
+    initStreamManager();
     
-    // Simulate detection tracking
-    simulateDetectionTracking();
+    // Set up event listeners
+    setupEventListeners();
     
-    // Simulate feature point blinking
-    simulateFeaturePointActivity();
+    // Load initial data
+    loadInitialData();
 });
 
-/**
- * Initialize the real-time clock in the header
- */
-function initializeClock() {
-    const clockElement = document.getElementById('current-time');
+// Initialize the map
+function initMap() {
+    console.log('Initializing map...');
     
-    function updateClock() {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString();
-        clockElement.textContent = timeString;
+    // Create the map
+    map = L.map('map').setView([51.505, -0.09], 13);
+    
+    // Add the tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    console.log('Map initialized');
+}
+
+// Initialize the stream manager
+function initStreamManager() {
+    console.log('Initializing stream manager...');
+    
+    // Create the stream manager
+    streamManager = new StreamManager();
+    
+    // Set up event listeners for the stream manager
+    streamManager.on('streamStarted', handleStreamStarted);
+    streamManager.on('streamStopped', handleStreamStopped);
+    streamManager.on('streamError', handleStreamError);
+    
+    console.log('Stream manager initialized');
+}
+
+// Set up event listeners
+function setupEventListeners() {
+    console.log('Setting up event listeners...');
+    
+    // Camera selection
+    document.querySelectorAll('.camera-select').forEach(select => {
+        select.addEventListener('change', handleCameraSelection);
+    });
+    
+    // Stream control buttons
+    document.querySelectorAll('.stream-control').forEach(button => {
+        button.addEventListener('click', handleStreamControl);
+    });
+    
+    console.log('Event listeners set up');
+}
+
+// Load initial data
+function loadInitialData() {
+    console.log('Loading initial data...');
+    
+    // Load cameras
+    loadCameras();
+    
+    // Load detections
+    loadDetections();
+    
+    console.log('Initial data loaded');
+}
+
+// Load cameras
+function loadCameras() {
+    console.log('Loading cameras...');
+    
+    // Fetch cameras from the API
+    fetch('/api/cameras')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Cameras loaded:', data);
+            
+            // Update the camera list
+            updateCameraList(data);
+            
+            // Add markers to the map
+            addCameraMarkers(data);
+        })
+        .catch(error => {
+            console.error('Error loading cameras:', error);
+        });
+}
+
+// Update the camera list
+function updateCameraList(cameras) {
+    console.log('Updating camera list...');
+    
+    // Get the camera list container
+    const cameraList = document.getElementById('cameraList');
+    
+    // Clear the camera list
+    cameraList.innerHTML = '';
+    
+    // Add each camera to the list
+    cameras.forEach(camera => {
+        // Create the camera item
+        const cameraItem = document.createElement('div');
+        cameraItem.className = 'camera-item';
+        cameraItem.dataset.cameraId = camera.id;
+        
+        // Create the camera name
+        const cameraName = document.createElement('div');
+        cameraName.className = 'camera-name';
+        cameraName.textContent = camera.name;
+        
+        // Create the camera status
+        const cameraStatus = document.createElement('div');
+        cameraStatus.className = 'camera-status';
+        
+        // Create the status indicator
+        const statusIndicator = document.createElement('div');
+        statusIndicator.className = 'status-indicator';
+        statusIndicator.classList.add(camera.status === 'running' ? 'online' : 'offline');
+        
+        // Create the status text
+        const statusText = document.createElement('span');
+        statusText.textContent = camera.status === 'running' ? 'Online' : 'Offline';
+        
+        // Add the status indicator and text to the camera status
+        cameraStatus.appendChild(statusIndicator);
+        cameraStatus.appendChild(statusText);
+        
+        // Add the camera name and status to the camera item
+        cameraItem.appendChild(cameraName);
+        cameraItem.appendChild(cameraStatus);
+        
+        // Add the camera item to the camera list
+        cameraList.appendChild(cameraItem);
+        
+        // Add click event listener to the camera item
+        cameraItem.addEventListener('click', () => {
+            selectCamera(camera);
+        });
+    });
+    
+    console.log('Camera list updated');
+}
+
+// Add camera markers to the map
+function addCameraMarkers(cameras) {
+    console.log('Adding camera markers to the map...');
+    
+    // Clear existing markers
+    markers.forEach(marker => marker.remove());
+    markers = [];
+    
+    // Add a marker for each camera
+    cameras.forEach(camera => {
+        // Create the marker
+        const marker = L.marker([camera.latitude, camera.longitude])
+            .bindPopup(`<b>${camera.name}</b><br>Status: ${camera.status}`)
+            .addTo(map);
+        
+        // Add the marker to the markers array
+        markers.push(marker);
+        
+        // Add click event listener to the marker
+        marker.on('click', () => {
+            selectCamera(camera);
+        });
+    });
+    
+    console.log('Camera markers added to the map');
+}
+
+// Select a camera
+function selectCamera(camera) {
+    console.log('Selecting camera:', camera);
+    
+    // Update the current camera
+    currentCamera = camera;
+    
+    // Update the UI
+    updateCameraUI(camera);
+    
+    // Start the stream if the camera is running
+    if (camera.status === 'running') {
+        startStream(camera.id);
+    }
+}
+
+// Update the camera UI
+function updateCameraUI(camera) {
+    console.log('Updating camera UI:', camera);
+    
+    // Update the camera name
+    document.getElementById('cameraName').textContent = camera.name;
+    
+    // Update the camera status
+    document.getElementById('cameraStatus').textContent = camera.status === 'running' ? 'Online' : 'Offline';
+    
+    // Update the camera location
+    document.getElementById('cameraLocation').textContent = `${camera.latitude}, ${camera.longitude}`;
+    
+    // Update the stream control buttons
+    updateStreamControlButtons(camera);
+    
+    // Center the map on the camera
+    map.setView([camera.latitude, camera.longitude], 15);
+    
+    // Highlight the selected camera in the list
+    document.querySelectorAll('.camera-item').forEach(item => {
+        if (item.dataset.cameraId === camera.id) {
+            item.classList.add('selected');
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+}
+
+// Update the stream control buttons
+function updateStreamControlButtons(camera) {
+    console.log('Updating stream control buttons:', camera);
+    
+    // Get the stream control buttons
+    const startButton = document.getElementById('startStream');
+    const stopButton = document.getElementById('stopStream');
+    
+    // Update the button states
+    if (camera.status === 'running') {
+        startButton.disabled = true;
+        stopButton.disabled = false;
+    } else {
+        startButton.disabled = false;
+        stopButton.disabled = true;
+    }
+}
+
+// Handle camera selection
+function handleCameraSelection(event) {
+    console.log('Camera selection changed:', event.target.value);
+    
+    // Get the selected camera
+    const cameraId = event.target.value;
+    
+    // Find the camera in the cameras array
+    const camera = cameras.find(c => c.id === cameraId);
+    
+    // Select the camera
+    if (camera) {
+        selectCamera(camera);
+    }
+}
+
+// Handle stream control
+function handleStreamControl(event) {
+    console.log('Stream control clicked:', event.target.id);
+    
+    // Get the camera ID
+    const cameraId = currentCamera.id;
+    
+    // Start or stop the stream
+    if (event.target.id === 'startStream') {
+        startStream(cameraId);
+    } else if (event.target.id === 'stopStream') {
+        stopStream(cameraId);
+    }
+}
+
+// Start a stream
+function startStream(cameraId) {
+    console.log('Starting stream for camera:', cameraId);
+    
+    // Start the stream
+    streamManager.startStream(cameraId);
+}
+
+// Stop a stream
+function stopStream(cameraId) {
+    console.log('Stopping stream for camera:', cameraId);
+    
+    // Stop the stream
+    streamManager.stopStream(cameraId);
+}
+
+// Handle stream started
+function handleStreamStarted(cameraId) {
+    console.log('Stream started for camera:', cameraId);
+    
+    // Update the UI
+    updateStreamUI(cameraId, true);
+}
+
+// Handle stream stopped
+function handleStreamStopped(cameraId) {
+    console.log('Stream stopped for camera:', cameraId);
+    
+    // Update the UI
+    updateStreamUI(cameraId, false);
+}
+
+// Handle stream error
+function handleStreamError(cameraId, error) {
+    console.error('Stream error for camera:', cameraId, error);
+    
+    // Show an error message
+    showErrorMessage(`Error streaming from camera ${cameraId}: ${error.message}`);
+}
+
+// Update the stream UI
+function updateStreamUI(cameraId, isStreaming) {
+    console.log('Updating stream UI for camera:', cameraId, 'isStreaming:', isStreaming);
+    
+    // Get the video container
+    const videoContainer = document.getElementById('videoContainer');
+    
+    // Get the loading indicator
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    
+    // Get the status indicator
+    const statusIndicator = document.getElementById('statusIndicator');
+    
+    // Update the UI based on the streaming state
+    if (isStreaming) {
+        // Hide the loading indicator
+        loadingIndicator.style.display = 'none';
+        
+        // Show the status indicator
+        statusIndicator.style.display = 'block';
+        
+        // Update the video source
+        const video = document.getElementById('cameraFeed');
+        video.src = `/api/streams/${cameraId}`;
+    } else {
+        // Show the loading indicator
+        loadingIndicator.style.display = 'block';
+        
+        // Hide the status indicator
+        statusIndicator.style.display = 'none';
+        
+        // Clear the video source
+        const video = document.getElementById('cameraFeed');
+        video.src = '';
+    }
+}
+
+// Show an error message
+function showErrorMessage(message) {
+    console.error('Error:', message);
+    
+    // Create the error message element
+    const errorMessage = document.createElement('div');
+    errorMessage.className = 'error-message';
+    errorMessage.textContent = message;
+    
+    // Add the error message to the page
+    document.body.appendChild(errorMessage);
+    
+    // Remove the error message after 5 seconds
+    setTimeout(() => {
+        errorMessage.remove();
+    }, 5000);
+}
+
+// Load detections
+function loadDetections() {
+    console.log('Loading detections...');
+    
+    // Fetch detections from the API
+    fetch('/api/detections')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Detections loaded:', data);
+            
+            // Update the detections list
+            updateDetectionsList(data);
+        })
+        .catch(error => {
+            console.error('Error loading detections:', error);
+        });
+}
+
+// Update the detections list
+function updateDetectionsList(detections) {
+    console.log('Updating detections list...');
+    
+    // Get the detections list container
+    const detectionsList = document.getElementById('detectionsList');
+    
+    // Clear the detections list
+    detectionsList.innerHTML = '';
+    
+    // Add each detection to the list
+    detections.forEach(detection => {
+        // Create the detection item
+        const detectionItem = document.createElement('div');
+        detectionItem.className = 'detection-item';
+        
+        // Create the detection time
+        const detectionTime = document.createElement('div');
+        detectionTime.className = 'detection-time';
+        detectionTime.textContent = new Date(detection.timestamp).toLocaleString();
+        
+        // Create the detection type
+        const detectionType = document.createElement('div');
+        detectionType.className = 'detection-type';
+        detectionType.textContent = detection.type;
+        
+        // Create the detection confidence
+        const detectionConfidence = document.createElement('div');
+        detectionConfidence.className = 'detection-confidence';
+        detectionConfidence.textContent = `${(detection.confidence * 100).toFixed(1)}%`;
+        
+        // Add the detection time, type, and confidence to the detection item
+        detectionItem.appendChild(detectionTime);
+        detectionItem.appendChild(detectionType);
+        detectionItem.appendChild(detectionConfidence);
+        
+        // Add the detection item to the detections list
+        detectionsList.appendChild(detectionItem);
+    });
+    
+    console.log('Detections list updated');
+}
+
+// Stream Manager class
+class StreamManager {
+    constructor() {
+        this.streams = {};
+        this.eventListeners = {};
     }
     
-    // Update clock immediately and then every second
-    updateClock();
-    setInterval(updateClock, 1000);
-}
-
-/**
- * Initialize subject selection functionality
- */
-function initializeSubjectSelection() {
-    const subjectCards = document.querySelectorAll('.subject-card');
-    const profileSection = document.querySelector('.profile-details');
-    
-    subjectCards.forEach(card => {
-        card.addEventListener('click', function() {
-            // Remove active class from all cards
-            subjectCards.forEach(c => c.querySelector('.card').classList.remove('border-primary'));
-            
-            // Add active class to clicked card
-            this.querySelector('.card').classList.add('border-primary');
-            
-            // Get subject ID
-            const subjectId = this.getAttribute('data-subject-id');
-            
-            // In a real application, this would fetch subject details
-            // For now, we'll just highlight the card with a brief animation
-            this.querySelector('.card').style.transform = 'scale(1.05)';
-            setTimeout(() => {
-                this.querySelector('.card').style.transform = 'scale(1)';
-            }, 200);
-            
-            // Update profile section (in a real app, this would load actual data)
-            // Here we're just simulating that the profile changed
-            profileSection.style.opacity = '0.5';
-            setTimeout(() => {
-                // If we clicked on the second subject, update the profile to match
-                if(subjectId === "19A7") {
-                    profileSection.querySelector('h3').textContent = "Subject #19A7";
-                    profileSection.querySelector('h3').className = "h6 text-primary";
-                    profileSection.querySelector('p').textContent = "Match Confidence: 87%";
-                    
-                    // Update other profile details
-                    const detailValues = profileSection.querySelectorAll('.detail-value');
-                    detailValues[0].textContent = "14:12:55"; // First seen
-                    detailValues[1].textContent = "3"; // Appearances
-                    detailValues[2].textContent = "Market Sq"; // Location
-                    detailValues[3].textContent = "25-35"; // Age
-                    detailValues[4].textContent = "Female"; // Gender
-                    detailValues[5].textContent = "5'6\" (168cm)"; // Height
-                    detailValues[6].textContent = "Tentative"; // Status
-                    
-                    // Update features
-                    const featureTags = profileSection.querySelector('.feature-tags');
-                    featureTags.innerHTML = `
-                        <span class="feature-tag">Red coat</span>
-                        <span class="feature-tag">Backpack</span>
-                        <span class="feature-tag">Hat</span>
-                        <span class="feature-tag">Boots</span>
-                    `;
-                } else {
-                    // Default back to subject #28F4
-                    profileSection.querySelector('h3').textContent = "Subject #28F4";
-                    profileSection.querySelector('h3').className = "h6 text-danger";
-                    profileSection.querySelector('p').textContent = "Match Confidence: 92%";
-                    
-                    // Reset other profile details
-                    const detailValues = profileSection.querySelectorAll('.detail-value');
-                    detailValues[0].textContent = "14:17:22"; // First seen
-                    detailValues[1].textContent = "5"; // Appearances
-                    detailValues[2].textContent = "Main Street"; // Location
-                    detailValues[3].textContent = "35-45"; // Age
-                    detailValues[4].textContent = "Male"; // Gender
-                    detailValues[5].textContent = "5'10\" (178cm)"; // Height
-                    detailValues[6].textContent = "Confirmed"; // Status
-                    
-                    // Reset features
-                    const featureTags = profileSection.querySelector('.feature-tags');
-                    featureTags.innerHTML = `
-                        <span class="feature-tag">Black jacket</span>
-                        <span class="feature-tag">Blue cap</span>
-                        <span class="feature-tag">Glasses</span>
-                        <span class="feature-tag">Beard</span>
-                    `;
-                }
-                
-                profileSection.style.opacity = '1';
-            }, 300);
-        });
-    });
-}
-
-/**
- * Simulate activity on camera feeds for demonstration
- */
-function simulateCameraFeeds() {
-    const cameraFeeds = document.querySelectorAll('.camera-feed-placeholder');
-    
-    cameraFeeds.forEach(feed => {
-        // Create a simulated activity indicator
-        const activityIndicator = document.createElement('div');
-        activityIndicator.classList.add('activity-indicator');
-        activityIndicator.style.position = 'absolute';
-        activityIndicator.style.bottom = '5px';
-        activityIndicator.style.right = '5px';
-        activityIndicator.style.width = '6px';
-        activityIndicator.style.height = '6px';
-        activityIndicator.style.borderRadius = '50%';
-        activityIndicator.style.backgroundColor = '#00FF00';
+    // Start a stream
+    startStream(cameraId) {
+        console.log('StreamManager: Starting stream for camera:', cameraId);
         
-        feed.appendChild(activityIndicator);
-        
-        // Simulate video availability toggle with button
-        const toggleButton = document.createElement('button');
-        toggleButton.classList.add('btn', 'btn-sm', 'btn-outline-secondary', 'position-absolute');
-        toggleButton.style.top = '5px';
-        toggleButton.style.right = '5px';
-        toggleButton.style.fontSize = '0.7rem';
-        toggleButton.style.padding = '2px 5px';
-        toggleButton.textContent = 'Toggle Feed';
-        
-        toggleButton.addEventListener('click', function(e) {
-            e.stopPropagation(); // Prevent event from bubbling up
-            
-            const placeholderText = feed.querySelector('.placeholder-text');
-            if(placeholderText.textContent.includes('Unavailable')) {
-                placeholderText.innerHTML = `
-                    <i class="fas fa-check-circle placeholder-icon text-success"></i>
-                    <span>Feed Active (Simulated)</span>
-                `;
-            } else {
-                placeholderText.innerHTML = `
-                    <i class="fas fa-video placeholder-icon"></i>
-                    <span>Feed Unavailable</span>
-                `;
-            }
-        });
-        
-        feed.appendChild(toggleButton);
-    });
-}
-
-/**
- * Simulate detection box movement for demonstration
- */
-function simulateDetectionTracking() {
-    const detectionBoxes = document.querySelectorAll('.detection-box');
-    
-    detectionBoxes.forEach(box => {
-        // Initial position - centered by default
-        let posX = 0;
-        let posY = 0;
-        let dirX = Math.random() > 0.5 ? 1 : -1;
-        let dirY = Math.random() > 0.5 ? 1 : -1;
-        
-        function moveBox() {
-            // Change direction occasionally
-            if (Math.random() < 0.05) {
-                dirX = -dirX;
-            }
-            if (Math.random() < 0.05) {
-                dirY = -dirY;
-            }
-            
-            // Update position
-            posX += dirX * 0.3;
-            posY += dirY * 0.2;
-            
-            // Keep within bounds
-            if (posX > 15 || posX < -15) {
-                dirX = -dirX;
-                posX = posX > 0 ? 15 : -15;
-            }
-            if (posY > 10 || posY < -10) {
-                dirY = -dirY;
-                posY = posY > 0 ? 10 : -10;
-            }
-            
-            // Apply transform - add to the existing translation for the centering
-            box.style.transform = `translateX(calc(-50% + ${posX}px)) translateY(${posY}px)`;
-            
-            // Continue animation
-            requestAnimationFrame(moveBox);
+        // Check if the stream is already running
+        if (this.streams[cameraId]) {
+            console.log('StreamManager: Stream already running for camera:', cameraId);
+            return;
         }
         
-        // Start animation
-        moveBox();
-    });
-}
-
-/**
- * Simulate feature point blinking and activity
- */
-function simulateFeaturePointActivity() {
-    const featurePoints = document.querySelectorAll('.feature-point');
-    
-    featurePoints.forEach(point => {
-        // Simulate activity with random blinking
-        setInterval(() => {
-            // Only blink sometimes
-            if (Math.random() < 0.3) {
-                point.style.opacity = '0.3';
-                setTimeout(() => {
-                    point.style.opacity = '1';
-                }, 200);
-            }
-        }, 2000 * Math.random() + 1000); // Random interval between 1-3 seconds
-    });
-}
-
-/**
- * Function to refresh all feeds - simulates live updating
- */
-function refreshFeeds() {
-    // Simulate some activity by updating timestamps
-    const timestamps = document.querySelectorAll('.timestamp');
-    timestamps.forEach(timestamp => {
-        const hours = Math.floor(Math.random() * 24).toString().padStart(2, '0');
-        const minutes = Math.floor(Math.random() * 60).toString().padStart(2, '0');
-        const seconds = Math.floor(Math.random() * 60).toString().padStart(2, '0');
-        timestamp.textContent = `${hours}:${minutes}:${seconds}`;
-    });
-    
-    // Simulate path activity - make current location markers pulse
-    const pathMarkers = document.querySelectorAll('.path-current-location');
-    pathMarkers.forEach(marker => {
-        marker.style.transform = 'translate(-50%, -50%) scale(1.5)';
-        setTimeout(() => {
-            marker.style.transform = 'translate(-50%, -50%) scale(1)';
-        }, 200);
-    });
-}
-
-// Add action button functionality
-document.addEventListener('DOMContentLoaded', function() {
-    // Simulate action button clicks
-    const actionButtons = document.querySelectorAll('.action-buttons button');
-    
-    actionButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // Visual feedback
-            button.disabled = true;
-            button.textContent = 'Processing...';
-            
-            setTimeout(() => {
-                // Simulate completion
-                button.textContent = 'Completed';
-                button.classList.remove('btn-secondary');
-                button.classList.add('btn-success');
-                
-                // Reset after a few seconds
-                setTimeout(() => {
-                    button.disabled = false;
-                    button.classList.remove('btn-success');
-                    button.classList.add('btn-secondary');
-                    button.textContent = button.textContent === 'Completed' ? 
-                        (button.getAttribute('data-original-text') || 'Action') : button.textContent;
-                }, 3000);
-            }, 1500);
-        });
+        // Create a new stream
+        this.streams[cameraId] = {
+            id: cameraId,
+            status: 'starting',
+            error: null
+        };
         
-        // Store original text
-        button.setAttribute('data-original-text', button.textContent);
-    });
-});
-
-// Set up a simple refresh interval
-setInterval(refreshFeeds, 30000); // Refresh every 30 seconds
-
-// Function to update detection boxes
-function updateDetectionBoxes(cameraId, detections) {
-    const detectionBoxesContainer = document.querySelector(`#camera-${cameraId} .detection-boxes`);
-    if (!detectionBoxesContainer) return;
-
-    // Clear existing boxes
-    detectionBoxesContainer.innerHTML = '';
-
-    // Add new boxes
-    detections.forEach(detection => {
-        const box = document.createElement('div');
-        box.className = 'detection-box';
-        box.style.borderColor = detection.color;
-        box.style.left = `${detection.x}%`;
-        box.style.top = `${detection.y}%`;
-        box.style.width = `${detection.width}%`;
-        box.style.height = `${detection.height}%`;
-
-        const label = document.createElement('div');
-        label.className = 'subject-id';
-        label.textContent = `Subject ${detection.subject_id}`;
-        label.style.color = detection.color;
-
-        box.appendChild(label);
-        detectionBoxesContainer.appendChild(box);
-    });
-}
-
-// WebSocket connection for real-time updates
-let ws = null;
-
-function connectWebSocket() {
-    ws = new WebSocket(`ws://${window.location.host}/ws`);
-
-    ws.onopen = () => {
-        console.log('WebSocket connection established');
-    };
-
-    ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === 'detection') {
-            updateDetectionBoxes(data.camera_id, data.detections);
+        // Emit the streamStarted event
+        this.emit('streamStarted', cameraId);
+    }
+    
+    // Stop a stream
+    stopStream(cameraId) {
+        console.log('StreamManager: Stopping stream for camera:', cameraId);
+        
+        // Check if the stream is running
+        if (!this.streams[cameraId]) {
+            console.log('StreamManager: Stream not running for camera:', cameraId);
+            return;
         }
-    };
-
-    ws.onclose = () => {
-        console.log('WebSocket connection closed. Reconnecting...');
-        setTimeout(connectWebSocket, 1000);
-    };
-
-    ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-    };
-}
-
-// Connect to WebSocket when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    connectWebSocket();
-});
-
-// Handle video stream errors
-document.querySelectorAll('video').forEach(video => {
-    video.addEventListener('error', (e) => {
-        console.error('Video stream error:', e);
-        const container = video.closest('.video-container');
-        if (container) {
-            container.innerHTML = '<div class="alert alert-danger">Failed to load video stream</div>';
+        
+        // Update the stream status
+        this.streams[cameraId].status = 'stopping';
+        
+        // Emit the streamStopped event
+        this.emit('streamStopped', cameraId);
+        
+        // Remove the stream
+        delete this.streams[cameraId];
+    }
+    
+    // Add an event listener
+    on(event, callback) {
+        console.log('StreamManager: Adding event listener for event:', event);
+        
+        // Check if the event exists
+        if (!this.eventListeners[event]) {
+            this.eventListeners[event] = [];
         }
-    });
-});
+        
+        // Add the callback to the event listeners
+        this.eventListeners[event].push(callback);
+    }
+    
+    // Remove an event listener
+    off(event, callback) {
+        console.log('StreamManager: Removing event listener for event:', event);
+        
+        // Check if the event exists
+        if (!this.eventListeners[event]) {
+            return;
+        }
+        
+        // Remove the callback from the event listeners
+        this.eventListeners[event] = this.eventListeners[event].filter(cb => cb !== callback);
+    }
+    
+    // Emit an event
+    emit(event, ...args) {
+        console.log('StreamManager: Emitting event:', event, 'with args:', args);
+        
+        // Check if the event exists
+        if (!this.eventListeners[event]) {
+            return;
+        }
+        
+        // Call each callback with the arguments
+        this.eventListeners[event].forEach(callback => {
+            callback(...args);
+        });
+    }
+}

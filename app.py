@@ -2,12 +2,17 @@
 Smart City Surveillance System
 """
 
-from flask import Flask, render_template, jsonify, redirect, url_for, request, send_file
+from flask import Flask, render_template, jsonify, redirect, url_for, request, send_file, Response
 import os
 import time
 import json
 import threading
 from stream_manager import StreamManager
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -101,9 +106,11 @@ SYSTEM_STATUS = {
 # Routes
 @app.route('/')
 def index():
-    # Update camera feeds with stream status
+    # Update camera feeds with stream status and latest clip info
     for feed in CAMERA_FEEDS:
         feed["stream_status"] = stream_manager.get_stream_status(feed["id"])
+        feed["latest_clip"] = stream_manager.get_latest_clip(feed["id"])
+        feed["has_clip"] = feed["latest_clip"] is not None and os.path.exists(feed["latest_clip"])
     
     return render_template('index.html', 
                            tracked_subjects=TRACKED_SUBJECTS,
@@ -122,9 +129,11 @@ def get_subjects():
 
 @app.route('/api/cameras')
 def get_cameras():
-    # Update camera feeds with stream status
+    # Update camera feeds with stream status and latest clip info
     for feed in CAMERA_FEEDS:
         feed["stream_status"] = stream_manager.get_stream_status(feed["id"])
+        feed["latest_clip"] = stream_manager.get_latest_clip(feed["id"])
+        feed["has_clip"] = feed["latest_clip"] is not None and os.path.exists(feed["latest_clip"])
     
     return jsonify(CAMERA_FEEDS)
 
@@ -154,6 +163,31 @@ def get_video_feed(camera_id):
             "status": "Video feed not available",
             "message": f"No clip available for camera {camera_id}"
         }), 404
+
+# Route to get a video stream for a camera (for continuous playback)
+@app.route('/api/video/stream/<camera_id>')
+def stream_video_feed(camera_id):
+    def generate():
+        while True:
+            # Get the latest clip for this camera
+            latest_clip = stream_manager.get_latest_clip(camera_id)
+            
+            if latest_clip and os.path.exists(latest_clip):
+                # Read the video file in chunks
+                with open(latest_clip, 'rb') as f:
+                    while True:
+                        chunk = f.read(1024)
+                        if not chunk:
+                            break
+                        yield chunk
+                
+                # Wait a short time before checking for a new clip
+                time.sleep(0.5)
+            else:
+                # If no clip is available, wait a bit and try again
+                time.sleep(1)
+    
+    return Response(generate(), mimetype='video/mp4')
 
 # Route to handle subject profile updates
 @app.route('/api/subject/<subject_id>/update', methods=['POST'])

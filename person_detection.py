@@ -615,7 +615,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description='Process video for person profiling with expanded bounding boxes')
-    parser.add_argument('--video', type=str, default="youtube_clips/clip_20250426_152046.mp4", help='Path to video file')
+    parser.add_argument('--video', type=str, default="youtube_clips/CAM-12/clip_20250426_213821.mp4", help='Path to video file')
     parser.add_argument('--display', action='store_true', help='Display processing in window')
     parser.add_argument('--expansion', type=float, default=0.15, help='Bounding box expansion ratio (e.g., 0.15 for 15%)')
     

@@ -201,7 +201,7 @@ def main():
     clipper = StreamClipper(
         video_id=video_id,
         output_dir=f"youtube_clips/{video_id}",
-        clip_duration=5,
+        clip_duration=10,
         max_attempts=3,
         cooldown=2
     )
