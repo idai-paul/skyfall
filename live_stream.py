@@ -1,12 +1,18 @@
+"""
+Live Stream Clipper Module
+
+This module provides a StreamClipper class that creates short clips from
+YouTube live streams using ffmpeg and yt-dlp.
+"""
+
 import os
 import time
-import signal
+import threading
 import sys
 import subprocess
-import threading
+import logging
 from datetime import datetime
 import yt_dlp
-import logging
 import random
 
 # Set up logging
@@ -14,12 +20,25 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 class StreamClipper:
-    def __init__(self, video_id, output_dir="youtube_clips", clip_duration=5, max_attempts=3, cooldown=2):
+    def __init__(self, video_id, output_dir="youtube_clips", clip_duration=5, max_attempts=3, cooldown=2, no_signals=False):
+        """
+        Initialize a stream clipper
+        
+        Args:
+            video_id: YouTube video ID
+            output_dir: Directory to store clips
+            clip_duration: Duration of each clip in seconds
+            max_attempts: Maximum number of attempts for each clip
+            cooldown: Cooldown time between attempts in seconds
+            no_signals: If True, disable signal handling (for thread safety)
+        """
         self.video_id = video_id
         self.output_dir = output_dir
         self.clip_duration = clip_duration
         self.max_attempts = max_attempts
         self.cooldown = cooldown
+        self.no_signals = no_signals
+        
         self.is_running = False
         self.clip_thread = None
         self.last_url = None
@@ -29,10 +48,18 @@ class StreamClipper:
         # Create output directory
         os.makedirs(output_dir, exist_ok=True)
         
-        # Set up signal handling
-        signal.signal(signal.SIGINT, self._signal_handler)
+        # Set up signal handling only in the main thread if not disabled
+        # This is the key change to fix the signal error
+        if not no_signals and threading.current_thread() is threading.main_thread():
+            try:
+                import signal
+                signal.signal(signal.SIGINT, self._signal_handler)
+                logger.info("Signal handling set up")
+            except Exception as e:
+                logger.warning(f"Could not set up signal handling: {e}")
     
     def _signal_handler(self, sig, frame):
+        """Handle Ctrl+C and other signals"""
         logger.info("Shutting down gracefully...")
         self.stop()
         sys.exit(0)
@@ -72,7 +99,7 @@ class StreamClipper:
             return None
     
     def _create_clip(self, timestamp=None):
-        """Create a single 5-second clip"""
+        """Create a single clip"""
         if timestamp is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
@@ -89,7 +116,7 @@ class StreamClipper:
                 time.sleep(self.cooldown)
                 continue
             
-            # FFmpeg command to record a 5-second clip
+            # FFmpeg command to record a clip
             cmd = [
                 'ffmpeg',
                 '-y',                      # Overwrite output files
