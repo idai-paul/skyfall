@@ -196,11 +196,11 @@ class StreamClipper:
 
 # Main function
 def main():
-    video_id = "A1-erGqmWDs"  # Castro Street Cam
+    video_id = "t4Hl35oF7Dg"  # Castro Street Cam
     
     clipper = StreamClipper(
         video_id=video_id,
-        output_dir="youtube_clips",
+        output_dir=f"youtube_clips/{video_id}",
         clip_duration=5,
         max_attempts=3,
         cooldown=2
