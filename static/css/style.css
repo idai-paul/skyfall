@@ -1,0 +1,504 @@
+/* 
+   Smart City Surveillance System CSS
+   Implementing the visual design with HTML and CSS instead of SVG
+*/
+
+/* General Styles */
+body {
+    font-family: 'Courier New', monospace;
+    background-color: #000000;
+    color: #FFFFFF;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+.bg-darker {
+    background-color: #0A0A0A;
+}
+
+.font-monospace {
+    font-family: 'Courier New', monospace;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: bold;
+}
+
+.sidebar {
+    height: calc(100vh - 50px);
+    overflow-y: auto;
+}
+
+/* Header Styles */
+header {
+    height: 50px;
+    background-color: #111111;
+    border-bottom: 1px solid #333333;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.status-indicator.online {
+    background-color: #00FF00;
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.offline {
+    background-color: #FF0000;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Subject Cards */
+.subject-card .card {
+    background-color: #111111;
+    border-color: #333333;
+    transition: transform 0.2s;
+}
+
+.subject-card .card:hover {
+    transform: scale(1.02);
+    cursor: pointer;
+}
+
+.card-header {
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 0.5rem 1rem;
+}
+
+.border-left-red {
+    border-left: 4px solid #FF0000;
+}
+
+.border-left-blue {
+    border-left: 4px solid #00AAFF;
+}
+
+.confidence-badge {
+    background-color: transparent;
+    color: #FFFFFF;
+    font-size: 0.8rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+}
+
+.detail-label {
+    color: #888888;
+}
+
+.detail-value {
+    color: #FFFFFF;
+    text-align: right;
+}
+
+.path-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+}
+
+.path-tag {
+    background-color: #222222;
+    color: #FFFFFF;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 0.7rem;
+}
+
+.path-arrow {
+    color: #666666;
+    font-size: 0.7rem;
+}
+
+/* Camera Feeds */
+.camera-feed-card {
+    height: 160px;
+    background-color: #111111;
+    border: 1px solid #333333;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.camera-header {
+    height: 30px;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+    color: #FFFFFF;
+    font-size: 0.9rem;
+}
+
+.camera-id {
+    color: #555555;
+    font-size: 0.8rem;
+}
+
+.camera-feed-placeholder {
+    height: 130px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.placeholder-text {
+    color: #555555;
+    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.placeholder-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+.detection-box {
+    position: absolute;
+    width: 80px;
+    height: 100px;
+    border: 2px solid;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: transform 0.5s;
+    animation: float 3s infinite ease-in-out;
+}
+
+@keyframes float {
+    0% { transform: translateX(-50%) translateY(0px); }
+    50% { transform: translateX(-50%) translateY(-5px); }
+    100% { transform: translateX(-50%) translateY(0px); }
+}
+
+.detection-label {
+    position: absolute;
+    top: -15px;
+    left: 0;
+    font-size: 0.75rem;
+}
+
+/* City Map */
+.city-map-container {
+    height: 300px;
+    background-color: #111111;
+    border: 1px solid #333333;
+    overflow: hidden;
+    position: relative;
+}
+
+.city-map {
+    height: 100%;
+    width: 100%;
+    position: relative;
+    background-color: #111111;
+}
+
+/* Roads Styling */
+.map-roads {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.road {
+    position: absolute;
+    background-color: #333333;
+}
+
+.road.horizontal {
+    height: 6px;
+}
+
+.road.vertical {
+    width: 6px;
+}
+
+/* Map Locations */
+.map-locations {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.map-location {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translate(-50%, -50%);
+}
+
+.location-circle {
+    width: 30px;
+    height: 30px;
+    background-color: #222222;
+    border: 1px solid #444444;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.7rem;
+    margin-bottom: 5px;
+}
+
+.location-label {
+    font-size: 0.7rem;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Subject Paths */
+.subject-paths {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.subject-path {
+    position: relative;
+}
+
+.path-line {
+    position: absolute;
+    height: 3px;
+}
+
+.path-current-location {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: pulse 1s infinite;
+}
+
+/* Person Segmentation */
+.camera-location {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+}
+
+.camera-location span:first-child {
+    color: #888888;
+}
+
+.timestamp {
+    color: #FFFFFF;
+    font-size: 0.8rem;
+}
+
+.segmentation-display {
+    height: 240px;
+    background-color: #111111;
+    border: 2px solid;
+    margin-bottom: 20px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.segmentation-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+/* Silhouette Styling */
+.silhouette {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.silhouette-head {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #222222;
+    position: relative;
+}
+
+.silhouette-body {
+    width: 70px;
+    height: 150px;
+    border-radius: 10px;
+    background-color: #222222;
+    margin-top: -10px;
+    position: relative;
+}
+
+.silhouette-backpack {
+    width: 40px;
+    height: 40px;
+    background-color: #222222;
+    border: 1px solid #00AAFF;
+    position: absolute;
+    right: -20px;
+    top: 30px;
+    border-radius: 5px;
+}
+
+/* Feature Points and Lines */
+.feature-point {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background-color: #FF0000;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.feature-point.blue {
+    background-color: #00AAFF;
+}
+
+.feature-line {
+    position: absolute;
+    background-color: #FF0000;
+    border-style: dashed;
+    border-width: 0;
+}
+
+.feature-line.blue {
+    background-color: #00AAFF;
+}
+
+.feature-match-results {
+    background-color: #080808;
+    border: 1px solid #333333;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.features-detected {
+    margin-top: 15px;
+}
+
+.feature-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.feature-tag {
+    background-color: #222222;
+    color: #FFFFFF;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 0.8rem;
+}
+
+/* Profile Section */
+.profile-image-container {
+    height: 200px;
+    background-color: #0A0A0A;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.profile-image-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.profile-silhouette {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.profile-silhouette .silhouette-head {
+    width: 80px;
+    height: 80px;
+    border: 2px solid #FF0000;
+}
+
+.profile-silhouette .silhouette-body {
+    width: 90px;
+    height: 70px;
+    border-top-right-radius: 40px;
+    border-top-left-radius: 40px;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.profile-details {
+    background-color: #0A0A0A;
+    border: 1px solid #222222;
+    padding: 15px;
+}
+
+.action-buttons {
+    margin-top: 20px;
+}
+
+.external-records-placeholder {
+    height: 60px;
+    background-color: #0A0A0A;
+    border: 1px solid #222222;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1200px) {
+    .sidebar {
+        height: auto;
+        min-height: 500px;
+    }
+}
+
+/* Activity Indicators */
+.activity-indicator {
+    animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
