@@ -11,92 +11,36 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-dark text-light">
-    <header class="bg-black py-2">
-        <div class="container-fluid">
-            <div class="d-flex justify-content-between align-items-center">
-                <h1 class="h4 mb-0 font-monospace">SMART CITY SURVEILLANCE NETWORK</h1>
-                <div class="d-flex align-items-center">
-                    <span id="current-time" class="me-2 font-monospace">14:23:08</span>
-                    <span class="status-indicator online"></span>
-                </div>
+    <!-- HEADER -->
+    <header class="main-header bg-black border-bottom">
+        <div class="container-fluid d-flex justify-content-between align-items-center py-2">
+            <div class="platform-title font-monospace">
+                PRISM: Protection, Response & Integrated Security Mgmt.
+            </div>
+            <div class="header-meta font-monospace">
+                <span id="header-date"></span>
+                <span id="header-time"></span>
             </div>
         </div>
     </header>
 
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Left Sidebar - Tracked Subjects -->
-            <div class="col-md-2 bg-black p-3 sidebar font-monospace">
-                <h2 class="h5 border-bottom pb-2 mb-3">TRACKED SUBJECTS</h2>
-                
-                <div id="tracked-subjects-container">
-                    <!-- Subject #28F4 -->
-                    <div class="subject-card mb-3" data-subject-id="28F4">
-                        <div class="card bg-dark border-secondary">
-                            <div class="card-header d-flex justify-content-between align-items-center border-left-red">
-                                <h5 class="card-title mb-0">Subject #28F4</h5>
-                                <span class="confidence-badge">92%</span>
-                            </div>
-                            <div class="card-body">
-                                <div class="detail-row">
-                                    <span class="detail-label">First seen:</span>
-                                    <span class="detail-value">14:17:22</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">Location:</span>
-                                    <span class="detail-value">Main Street</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">Signature:</span>
-                                    <span class="detail-value">Black jacket</span>
-                                </div>
-                                
-                                <div class="mt-3">
-                                    <h6 class="border-bottom pb-1 mb-2">PATH</h6>
-                                    <div class="path-tags">
-                                        <span class="path-tag">Central St</span>
-                                        <span class="path-arrow">→</span>
-                                        <span class="path-tag">Main St</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Subject #19A7 -->
-                    <div class="subject-card mb-3" data-subject-id="19A7">
-                        <div class="card bg-dark border-secondary">
-                            <div class="card-header d-flex justify-content-between align-items-center border-left-blue">
-                                <h5 class="card-title mb-0">Subject #19A7</h5>
-                                <span class="confidence-badge">87%</span>
-                            </div>
-                            <div class="card-body">
-                                <div class="detail-row">
-                                    <span class="detail-label">First seen:</span>
-                                    <span class="detail-value">14:12:55</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">Location:</span>
-                                    <span class="detail-value">Market Sq</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">Signature:</span>
-                                    <span class="detail-value">Red coat</span>
-                                </div>
-                                
-                                <div class="mt-3">
-                                    <h6 class="border-bottom pb-1 mb-2">PATH</h6>
-                                    <div class="path-tags">
-                                        <span class="path-tag">Bus Stop</span>
-                                        <span class="path-arrow">→</span>
-                                        <span class="path-tag">City Park</span>
-                                        <span class="path-arrow">→</span>
-                                        <span class="path-tag">Market</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    <div class="container-fluid flex-grow-1 d-flex flex-column" style="min-height: 0;">
+        <div class="row flex-grow-1">
+            <!-- Left Sidebar - Navigation -->
+            <div class="col-md-1 bg-black p-3 sidebar font-monospace">
+                <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
+                    <a class="nav-link active text-light mb-2" href="{{ url_for('index') }}" role="tab">
+                        <i class="fas fa-video"></i>
+                    </a>
+                    <a class="nav-link text-light mb-2" href="{{ url_for('tracked_people') }}" role="tab">
+                        <i class="fas fa-users"></i>
+                    </a>
+                    <a class="nav-link text-light mb-2" href="#" role="tab">
+                        <i class="fas fa-chart-line"></i>
+                    </a>
+                    <a class="nav-link text-light mb-2" href="#" role="tab">
+                        <i class="fas fa-cog"></i>
+                    </a>
                 </div>
                 
                 <!-- System Status -->
@@ -104,166 +48,157 @@
                 <div class="system-status">
                     <div class="detail-row">
                         <span class="detail-label">Cameras:</span>
-                        <span class="detail-value">24/24</span>
+                        <span class="detail-value">{{ system_status.cameras }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Tracked:</span>
-                        <span class="detail-value">12</span>
+                        <span class="detail-value">{{ system_status.tracked }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Algorithm:</span>
-                        <span class="detail-value">FaceTrack v3</span>
+                        <span class="detail-value">{{ system_status.algorithm }}</span>
                     </div>
                 </div>
             </div>
             
             <!-- Main Content - Camera Feeds & Map -->
-            <div class="col-md-5 p-3 main-content font-monospace">
-                <!-- Camera Feeds -->
-                <h2 class="h5 border-bottom pb-2 mb-3">LIVE CAMERA FEEDS</h2>
-                <div class="row" id="camera-feeds-container">
-                    <!-- Camera 1 - Central Station -->
-                    <div class="col-md-6 mb-3">
-                        <div class="camera-feed-card">
-                            <div class="camera-header">
-                                <span>Central Station</span>
-                                <span class="camera-id">CAM-01</span>
-                            </div>
-                            <div class="camera-feed-placeholder" data-camera-id="CAM-01">
-                                <!-- Empty placeholder for future video feed -->
-                                <div class="placeholder-text">
-                                    <i class="fas fa-video placeholder-icon"></i>
-                                    <span>Feed Unavailable</span>
+            <div class="col-md-6 p-3 main-content font-monospace d-flex flex-column h-100" style="min-width:0;">
+                <!-- Camera Feeds (fixed height) -->
+                <div class="camera-feeds-section" style="flex: 0 0 340px; min-height: 0;">
+                    <h2 class="h5 border-bottom pb-2 mb-3">LIVE CAMERA FEEDS</h2>
+                    <div class="row h-100" id="camera-feeds-container" style="overflow-x: auto;">
+                        <!-- Camera feed cards here -->
+                        <!-- Camera 1 - Central Station -->
+                        <div class="col-md-6 mb-3">
+                            <div class="camera-feed-card">
+                                <div class="camera-header">
+                                    <span>Central Station</span>
+                                    <span class="camera-id">CAM-01</span>
+                                </div>
+                                <div class="camera-feed-placeholder" data-camera-id="CAM-01">
+                                    <!-- Empty placeholder for future video feed -->
+                                    <div class="placeholder-text">
+                                        <i class="fas fa-video placeholder-icon"></i>
+                                        <span>Feed Unavailable</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- Camera 2 - Main Street -->
-                    <div class="col-md-6 mb-3">
-                        <div class="camera-feed-card">
-                            <div class="camera-header">
-                                <span>Main Street</span>
-                                <span class="camera-id">CAM-04</span>
-                            </div>
-                            <div class="camera-feed-placeholder" data-camera-id="CAM-04">
-                                <div class="placeholder-text">
-                                    <i class="fas fa-video placeholder-icon"></i>
-                                    <span>Feed Unavailable</span>
+                        <!-- Camera 2 - Main Street -->
+                        <div class="col-md-6 mb-3">
+                            <div class="camera-feed-card">
+                                <div class="camera-header">
+                                    <span>Main Street</span>
+                                    <span class="camera-id">CAM-04</span>
                                 </div>
-                                
-                                <!-- Detection box for subject #28F4 -->
-                                <div class="detection-box" style="border-color: #FF0000">
-                                    <span class="detection-label" style="color: #FF0000">
-                                        Subject #28F4
-                                    </span>
+                                <div class="camera-feed-placeholder" data-camera-id="CAM-04">
+                                    <div class="placeholder-text">
+                                        <i class="fas fa-video placeholder-icon"></i>
+                                        <span>Feed Unavailable</span>
+                                    </div>
+                                    <!-- Detection box for subject #28F4 -->
+                                    <div class="detection-box" style="border-color: #FF0000">
+                                        <span class="detection-label" style="color: #FF0000">
+                                            Subject #28F4
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- Camera 3 - Market Square -->
-                    <div class="col-md-6 mb-3">
-                        <div class="camera-feed-card">
-                            <div class="camera-header">
-                                <span>Market Square</span>
-                                <span class="camera-id">CAM-12</span>
-                            </div>
-                            <div class="camera-feed-placeholder" data-camera-id="CAM-12">
-                                <div class="placeholder-text">
-                                    <i class="fas fa-video placeholder-icon"></i>
-                                    <span>Feed Unavailable</span>
+                        <!-- Camera 3 - Market Square -->
+                        <div class="col-md-6 mb-3">
+                            <div class="camera-feed-card">
+                                <div class="camera-header">
+                                    <span>Market Square</span>
+                                    <span class="camera-id">CAM-12</span>
                                 </div>
-                                
-                                <!-- Detection box for subject #19A7 -->
-                                <div class="detection-box" style="border-color: #00AAFF">
-                                    <span class="detection-label" style="color: #00AAFF">
-                                        Subject #19A7
-                                    </span>
+                                <div class="camera-feed-placeholder" data-camera-id="CAM-12">
+                                    <div class="placeholder-text">
+                                        <i class="fas fa-video placeholder-icon"></i>
+                                        <span>Feed Unavailable</span>
+                                    </div>
+                                    <!-- Detection box for subject #19A7 -->
+                                    <div class="detection-box" style="border-color: #00AAFF">
+                                        <span class="detection-label" style="color: #00AAFF">
+                                            Subject #19A7
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- Camera 4 - Bus Stop -->
-                    <div class="col-md-6 mb-3">
-                        <div class="camera-feed-card">
-                            <div class="camera-header">
-                                <span>Bus Stop</span>
-                                <span class="camera-id">CAM-07</span>
-                            </div>
-                            <div class="camera-feed-placeholder" data-camera-id="CAM-07">
-                                <div class="placeholder-text">
-                                    <i class="fas fa-video placeholder-icon"></i>
-                                    <span>Feed Unavailable</span>
+                        <!-- Camera 4 - Bus Stop -->
+                        <div class="col-md-6 mb-3">
+                            <div class="camera-feed-card">
+                                <div class="camera-header">
+                                    <span>Bus Stop</span>
+                                    <span class="camera-id">CAM-07</span>
+                                </div>
+                                <div class="camera-feed-placeholder" data-camera-id="CAM-07">
+                                    <div class="placeholder-text">
+                                        <i class="fas fa-video placeholder-icon"></i>
+                                        <span>Feed Unavailable</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <!-- City Map -->
-                <h2 class="h5 border-bottom pb-2 mb-3 mt-4">CITY SURVEILLANCE MAP</h2>
-                <div class="city-map-container">
-                    <div id="city-map" class="city-map">
-                        <!-- City map visualization using pure HTML/CSS -->
-                        <div class="map-roads">
-                            <!-- Horizontal Roads -->
-                            <div class="road horizontal" style="top: 50px; left: 60px; width: 250px;"></div>
-                            <div class="road horizontal" style="top: 150px; left: 60px; width: 320px;"></div>
-                            
-                            <!-- Vertical Roads -->
-                            <div class="road vertical" style="top: 0px; left: 110px; height: 250px;"></div>
-                            <div class="road vertical" style="top: 0px; left: 310px; height: 250px;"></div>
-                            <div class="road vertical" style="top: 0px; left: 380px; height: 150px;"></div>
-                        </div>
-                        
-                        <!-- Map Locations -->
-                        <div class="map-locations">
-                            <!-- Central Station -->
-                            <div class="map-location" style="top: 50px; left: 110px;">
-                                <div class="location-circle">01</div>
-                                <div class="location-label">Central Station</div>
+                <!-- City Map (fills remaining space) -->
+                <div class="city-map-section d-flex flex-column flex-grow-1" style="min-height:0;">
+                    <h2 class="h5 border-bottom pb-2 mb-3 mt-4">CITY SURVEILLANCE MAP</h2>
+                    <div class="city-map-container flex-grow-1" style="min-height:0;">
+                        <div id="city-map" class="city-map">
+                            <!-- City map visualization using pure HTML/CSS -->
+                            <div class="map-roads">
+                                <!-- Horizontal Roads -->
+                                <div class="road horizontal" style="top: 50px; left: 60px; width: 250px;"></div>
+                                <div class="road horizontal" style="top: 150px; left: 60px; width: 320px;"></div>
+                                <!-- Vertical Roads -->
+                                <div class="road vertical" style="top: 0px; left: 110px; height: 250px;"></div>
+                                <div class="road vertical" style="top: 0px; left: 310px; height: 250px;"></div>
+                                <div class="road vertical" style="top: 0px; left: 380px; height: 150px;"></div>
                             </div>
-                            
-                            <!-- Main Street -->
-                            <div class="map-location" style="top: 50px; left: 310px;">
-                                <div class="location-circle">04</div>
-                                <div class="location-label">Main Street</div>
+                            <!-- Map Locations -->
+                            <div class="map-locations">
+                                <!-- Central Station -->
+                                <div class="map-location" style="top: 50px; left: 110px;">
+                                    <div class="location-circle">01</div>
+                                    <div class="location-label">Central Station</div>
+                                </div>
+                                <!-- Main Street -->
+                                <div class="map-location" style="top: 50px; left: 310px;">
+                                    <div class="location-circle">04</div>
+                                    <div class="location-label">Main Street</div>
+                                </div>
+                                <!-- Bus Stop -->
+                                <div class="map-location" style="top: 150px; left: 110px;">
+                                    <div class="location-circle">07</div>
+                                    <div class="location-label">Bus Stop</div>
+                                </div>
+                                <!-- City Park -->
+                                <div class="map-location" style="top: 150px; left: 210px;">
+                                    <div class="location-circle">09</div>
+                                    <div class="location-label">City Park</div>
+                                </div>
+                                <!-- Market Square -->
+                                <div class="map-location" style="top: 150px; left: 310px;">
+                                    <div class="location-circle">12</div>
+                                    <div class="location-label">Market Square</div>
+                                </div>
                             </div>
-                            
-                            <!-- Bus Stop -->
-                            <div class="map-location" style="top: 150px; left: 110px;">
-                                <div class="location-circle">07</div>
-                                <div class="location-label">Bus Stop</div>
-                            </div>
-                            
-                            <!-- City Park -->
-                            <div class="map-location" style="top: 150px; left: 210px;">
-                                <div class="location-circle">09</div>
-                                <div class="location-label">City Park</div>
-                            </div>
-                            
-                            <!-- Market Square -->
-                            <div class="map-location" style="top: 150px; left: 310px;">
-                                <div class="location-circle">12</div>
-                                <div class="location-label">Market Square</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Subject Paths -->
-                        <div class="subject-paths">
-                            <!-- Subject #28F4 Path -->
-                            <div class="subject-path" data-subject="28F4">
-                                <div class="path-line" style="top: 50px; left: 110px; width: 200px; background-color: #FF0000;"></div>
-                                <div class="path-current-location" style="top: 50px; left: 310px; background-color: #FF0000;"></div>
-                            </div>
-                            
-                            <!-- Subject #19A7 Path -->
-                            <div class="subject-path" data-subject="19A7">
-                                <div class="path-line" style="top: 150px; left: 110px; width: 100px; background-color: #00AAFF;"></div>
-                                <div class="path-line" style="top: 150px; left: 210px; width: 100px; background-color: #00AAFF;"></div>
-                                <div class="path-current-location" style="top: 150px; left: 310px; background-color: #00AAFF;"></div>
+                            <!-- Subject Paths -->
+                            <div class="subject-paths">
+                                <!-- Subject #28F4 Path -->
+                                <div class="subject-path" data-subject="28F4">
+                                    <div class="path-line" style="top: 50px; left: 110px; width: 200px; background-color: #FF0000;"></div>
+                                    <div class="path-current-location" style="top: 50px; left: 310px; background-color: #FF0000;"></div>
+                                </div>
+                                <!-- Subject #19A7 Path -->
+                                <div class="subject-path" data-subject="19A7">
+                                    <div class="path-line" style="top: 150px; left: 110px; width: 100px; background-color: #00AAFF;"></div>
+                                    <div class="path-line" style="top: 150px; left: 210px; width: 100px; background-color: #00AAFF;"></div>
+                                    <div class="path-current-location" style="top: 150px; left: 310px; background-color: #00AAFF;"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -360,84 +295,109 @@
             </div>
             
             <!-- Right Sidebar - Person Profile -->
-            <div class="col-md-2 bg-black p-3 sidebar font-monospace">
+            <div class="col-md-2 bg-black p-3 sidebar font-monospace d-flex flex-column h-100" id="subject-profile-pane">
                 <h2 class="h5 border-bottom pb-2 mb-3">SUBJECT PROFILE</h2>
-                
-                <!-- Person Image Placeholder -->
-                <div class="profile-image-container mb-4">
-                    <div class="profile-image-placeholder">
-                        <div class="profile-silhouette">
-                            <div class="silhouette-head"></div>
-                            <div class="silhouette-body"></div>
+                <div class="profile-scroll flex-grow-1 d-flex flex-column" style="overflow-y:auto; min-height:0;">
+                    <!-- Person Image Placeholder -->
+                    <div class="profile-image-container mb-4">
+                        <div class="profile-image-placeholder">
+                            <div class="profile-silhouette">
+                                <div class="silhouette-head"></div>
+                                <div class="silhouette-body"></div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Profile Details -->
-                <div class="profile-details mb-4">
-                    <h3 class="h6 text-danger">Subject #28F4</h3>
-                    <p>Match Confidence: 92%</p>
-                    <hr class="border-secondary">
-                    
-                    <div class="detail-row">
-                        <span class="detail-label">First Detection:</span>
-                        <span class="detail-value">14:17:22</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Total Appearances:</span>
-                        <span class="detail-value">5</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Last Location:</span>
-                        <span class="detail-value">Main Street</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Est. Age Range:</span>
-                        <span class="detail-value">35-45</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Est. Gender:</span>
-                        <span class="detail-value">Male</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Est. Height:</span>
-                        <span class="detail-value">5'10" (178cm)</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Recognition Status:</span>
-                        <span class="detail-value">Confirmed</span>
-                    </div>
-                    
-                    <hr class="border-secondary">
-                    
-                    <div class="visual-signatures">
-                        <p class="text-muted mb-1">Visual Signatures:</p>
-                        <div class="feature-tags">
-                            <span class="feature-tag">Black jacket</span>
-                            <span class="feature-tag">Blue cap</span>
-                            <span class="feature-tag">Glasses</span>
-                            <span class="feature-tag">Beard</span>
+                    <!-- Profile Details -->
+                    <div class="profile-details mb-4" id="profile-summary">
+                        <h3 class="h6 text-danger" id="profile-id">Subject #28F4</h3>
+                        <p id="profile-confidence">Match Confidence: 92%</p>
+                        <hr class="border-secondary">
+                        <div class="detail-row"><span class="detail-label">First Detection:</span><span class="detail-value">14:17:22</span></div>
+                        <div class="detail-row"><span class="detail-label">Total Appearances:</span><span class="detail-value">5</span></div>
+                        <div class="detail-row"><span class="detail-label">Last Location:</span><span class="detail-value">Main Street</span></div>
+                        <div class="detail-row"><span class="detail-label">Est. Age Range:</span><span class="detail-value">35-45</span></div>
+                        <div class="detail-row"><span class="detail-label">Est. Gender:</span><span class="detail-value">Male</span></div>
+                        <div class="detail-row"><span class="detail-label">Est. Height:</span><span class="detail-value">5'10\" (178cm)</span></div>
+                        <div class="detail-row"><span class="detail-label">Recognition Status:</span><span class="detail-value">Confirmed</span></div>
+                        <hr class="border-secondary">
+                        <div class="visual-signatures">
+                            <p class="text-muted mb-1">Visual Signatures:</p>
+                            <div class="feature-tags">
+                                <span class="feature-tag">Black jacket</span>
+                                <span class="feature-tag">Blue cap</span>
+                                <span class="feature-tag">Glasses</span>
+                                <span class="feature-tag">Beard</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Action Buttons -->
-                <div class="action-buttons">
-                    <button class="btn btn-secondary w-100 mb-2">Add to Active Case</button>
-                    <button class="btn btn-secondary w-100 mb-4">Start Persistent Collection</button>
-                </div>
-                
-                <!-- External Records -->
-                <h2 class="h6 border-bottom pb-2 mb-3">EXTERNAL RECORDS</h2>
-                <div class="external-records-placeholder">
-                    <p class="text-muted text-center">No external records available</p>
+                    <!-- Expandable More Info -->
+                    <div id="profile-more-info" class="mb-4" style="display:none;"></div>
+                    <!-- Actions -->
+                    <div class="action-buttons mb-4">
+                        <button class="btn btn-secondary w-100 mb-2" onclick="addToCase()">Add to Active Case</button>
+                        <button class="btn btn-secondary w-100 mb-2" onclick="startCollection()">Start Persistent Collection</button>
+                        <button class="btn btn-outline-info w-100" onclick="showMoreInfo()">Show More Info</button>
+                    </div>
+                    <!-- External Records -->
+                    <h2 class="h6 border-bottom pb-2 mb-3">EXTERNAL RECORDS</h2>
+                    <div class="external-records-placeholder">
+                        <p class="text-muted text-center">No external records available</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- FOOTER -->
+    <footer class="main-footer bg-black border-top font-monospace">
+        <div class="container-fluid d-flex justify-content-between align-items-center py-1">
+            <span>
+                SYSTEM STATUS: <span class="text-success">OPERATIONAL</span> |
+                LAST SYNC: <span id="footer-sync"></span> |
+                CURRENT SESSION ACCESS VERIFIED: JOHN DOE, JOHN@ACMEAICOMPANY.COM
+            </span>
+            <span>
+                v1.0.3
+            </span>
+        </div>
+    </footer>
+
     <!-- Bootstrap and app scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+    function updateDateTime() {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' });
+        const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
+        document.getElementById('header-date').textContent = dateStr.toUpperCase();
+        document.getElementById('header-time').textContent = timeStr;
+        document.getElementById('footer-sync').textContent = dateStr.toUpperCase() + ' ' + timeStr;
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+    </script>
+    <script>
+    function showMoreInfo() {
+        const moreInfo = document.getElementById('profile-more-info');
+        moreInfo.innerHTML = `
+            <div class="card bg-dark border-secondary p-2">
+                <h6>Additional Details</h6>
+                <ul>
+                    <li>Known associates: None</li>
+                    <li>Last seen: 2 minutes ago</li>
+                    <li>Notes: Subject flagged for further review.</li>
+                </ul>
+            </div>
+        `;
+        moreInfo.style.display = 'block';
+    }
+    function addToCase() {
+        alert('Added to active case!');
+    }
+    function startCollection() {
+        alert('Started persistent collection!');
+    }
+    </script>
 </body>
 </html>

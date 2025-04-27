@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracked People - Smart City Surveillance System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-dark text-light">
+    <!-- HEADER -->
+    <header class="main-header bg-black border-bottom">
+        <div class="container-fluid d-flex justify-content-between align-items-center py-2">
+            <div class="platform-title font-monospace">
+                PRISM: Protection, Response & Integrated Security Mgmt.
+            </div>
+            <div class="header-meta font-monospace">
+                <span id="header-date"></span>
+                <span id="header-time"></span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid flex-grow-1 d-flex flex-column" style="min-height: 0;">
+        <div class="row flex-grow-1">
+            <!-- Left Sidebar - Navigation -->
+            <div class="col-md-1 bg-black p-3 sidebar font-monospace">
+                <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
+                    <a class="nav-link text-light mb-2" href="{{ url_for('index') }}" role="tab">
+                        <i class="fas fa-video"></i>
+                    </a>
+                    <a class="nav-link active text-light mb-2" href="{{ url_for('tracked_people') }}" role="tab">
+                        <i class="fas fa-users"></i>
+                    </a>
+                    <a class="nav-link text-light mb-2" href="#" role="tab">
+                        <i class="fas fa-chart-line"></i>
+                    </a>
+                    <a class="nav-link text-light mb-2" href="#" role="tab">
+                        <i class="fas fa-cog"></i>
+                    </a>
+                </div>
+                
+                <!-- System Status -->
+                <h2 class="h5 border-bottom pb-2 mb-3 mt-4">SYSTEM STATUS</h2>
+                <div class="system-status">
+                    <div class="detail-row">
+                        <span class="detail-label">Cameras:</span>
+                        <span class="detail-value">{{ system_status.cameras }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Tracked:</span>
+                        <span class="detail-value">{{ system_status.tracked }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Algorithm:</span>
+                        <span class="detail-value">{{ system_status.algorithm }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content - Tracked People -->
+            <div class="col-md-11 p-3 main-content font-monospace">
+                <h2 class="h5 border-bottom pb-2 mb-3">TRACKED PEOPLE</h2>
+                
+                <div class="row" id="tracked-subjects-container">
+                    {% for subject in tracked_subjects %}
+                    <div class="col-md-4 mb-4">
+                        <div class="subject-card" data-subject-id="{{ subject.id }}">
+                            <div class="card bg-dark border-secondary h-100">
+                                <div class="card-header d-flex justify-content-between align-items-center" style="border-left: 4px solid {{ subject.color }}">
+                                    <h5 class="card-title mb-0">Subject #{{ subject.id }}</h5>
+                                    <span class="confidence-badge">{{ subject.confidence }}</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="profile-image-placeholder mb-3">
+                                                <div class="profile-silhouette">
+                                                    <div class="silhouette-head"></div>
+                                                    <div class="silhouette-body"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <div class="detail-row">
+                                                <span class="detail-label">First seen:</span>
+                                                <span class="detail-value">{{ subject.first_seen }}</span>
+                                            </div>
+                                            <div class="detail-row">
+                                                <span class="detail-label">Last seen:</span>
+                                                <span class="detail-value">{{ subject.location }}</span>
+                                            </div>
+                                            <div class="detail-row">
+                                                <span class="detail-label">Signature:</span>
+                                                <span class="detail-value">{{ subject.signature }}</span>
+                                            </div>
+                                            <div class="detail-row">
+                                                <span class="detail-label">Est. Age:</span>
+                                                <span class="detail-value">{{ subject.age_range }}</span>
+                                            </div>
+                                            <div class="detail-row">
+                                                <span class="detail-label">Est. Gender:</span>
+                                                <span class="detail-value">{{ subject.gender }}</span>
+                                            </div>
+                                            <div class="detail-row">
+                                                <span class="detail-label">Est. Height:</span>
+                                                <span class="detail-value">{{ subject.height }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <h6 class="border-bottom pb-1 mb-2">PATH</h6>
+                                        <div class="path-tags">
+                                            {% for location in subject.path %}
+                                                <span class="path-tag">{{ location }}</span>
+                                                {% if not loop.last %}
+                                                <span class="path-arrow">→</span>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <h6 class="border-bottom pb-1 mb-2">FEATURES</h6>
+                                        <div class="feature-tags">
+                                            {% for feature in subject.features %}
+                                                <span class="feature-tag">{{ feature }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <h6 class="border-bottom pb-1 mb-2">ENRICHMENTS</h6>
+                                        <div class="enrichment-tags">
+                                            <span class="enrichment-tag">Frequent visitor</span>
+                                            <span class="enrichment-tag">Tied to license plate ABC123</span>
+                                            <span class="enrichment-tag">Linked to Person X</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button class="btn btn-sm btn-outline-secondary w-100" onclick="viewDetails('{{ subject.id }}')">View Details</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="main-footer bg-black border-top font-monospace">
+        <div class="container-fluid d-flex justify-content-between align-items-center py-1">
+            <span>
+                SYSTEM STATUS: <span class="text-success">OPERATIONAL</span> |
+                LAST SYNC: <span id="footer-sync"></span> |
+                CURRENT SESSION ACCESS VERIFIED: JOHN DOE, JOHN@ACMEAICOMPANY.COM
+            </span>
+            <span>
+                v1.0.3
+            </span>
+        </div>
+    </footer>
+
+    <!-- Bootstrap and app scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+    function updateDateTime() {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' });
+        const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
+        document.getElementById('header-date').textContent = dateStr.toUpperCase();
+        document.getElementById('header-time').textContent = timeStr;
+        document.getElementById('footer-sync').textContent = dateStr.toUpperCase() + ' ' + timeStr;
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+    
+    function viewDetails(subjectId) {
+        // In a real implementation, this would navigate to a detailed view
+        alert('Viewing details for Subject #' + subjectId);
+    }
+    </script>
+</body>
+</html> 

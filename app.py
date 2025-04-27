@@ -86,6 +86,12 @@ def index():
                            camera_feeds=CAMERA_FEEDS,
                            system_status=SYSTEM_STATUS)
 
+@app.route('/tracked-people')
+def tracked_people():
+    return render_template('tracked_people.html',
+                           tracked_subjects=TRACKED_SUBJECTS,
+                           system_status=SYSTEM_STATUS)
+
 @app.route('/api/subjects')
 def get_subjects():
     return jsonify(TRACKED_SUBJECTS)
@@ -128,106 +134,3 @@ def update_subject(subject_id):
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080)
-"""
-Smart City Surveillance System
-
-A Flask application to display the Smart City Surveillance System with person segmentation.
-The application includes placeholder cards for live video feeds and stubs for future integration.
-Using HTML and CSS instead of SVG.
-"""
-
-from flask import Flask, render_template, jsonify
-import os
-import time
-
-app = Flask(__name__)
-
-# Sample data for the tracked subjects
-TRACKED_SUBJECTS = [
-    {
-        "id": "28F4",
-        "confidence": "92%",
-        "first_seen": "14:17:22",
-        "location": "Main Street",
-        "signature": "Black jacket",
-        "path": ["Central St", "Main St"],
-        "color": "#FF0000",
-    },
-    {
-        "id": "19A7",
-        "confidence": "87%",
-        "first_seen": "14:12:55",
-        "location": "Market Sq",
-        "signature": "Red coat",
-        "path": ["Bus Stop", "City Park", "Market"],
-        "color": "#00AAFF",
-    }
-]
-
-# Sample data for camera feeds
-CAMERA_FEEDS = [
-    {
-        "id": "CAM-01",
-        "name": "Central Station",
-        "status": "online",
-        "detected_subjects": []
-    },
-    {
-        "id": "CAM-04",
-        "name": "Main Street",
-        "status": "online",
-        "detected_subjects": ["28F4"]
-    },
-    {
-        "id": "CAM-12",
-        "name": "Market Square", 
-        "status": "online",
-        "detected_subjects": ["19A7"]
-    },
-    {
-        "id": "CAM-07",
-        "name": "Bus Stop",
-        "status": "online",
-        "detected_subjects": []
-    }
-]
-
-# Sample data for system status
-SYSTEM_STATUS = {
-    "cameras": "24/24",
-    "tracked": 12,
-    "algorithm": "FaceTrack v3"
-}
-
-# Routes
-@app.route('/')
-def index():
-    svg_content = get_svg_content()
-    return render_template('index.html', 
-                           svg_content=svg_content,
-                           tracked_subjects=TRACKED_SUBJECTS,
-                           camera_feeds=CAMERA_FEEDS,
-                           system_status=SYSTEM_STATUS)
-
-@app.route('/api/subjects')
-def get_subjects():
-    return jsonify(TRACKED_SUBJECTS)
-
-@app.route('/api/cameras')
-def get_cameras():
-    return jsonify(CAMERA_FEEDS)
-
-@app.route('/api/system')
-def get_system_status():
-    return jsonify(SYSTEM_STATUS)
-
-@app.route('/api/subject/<subject_id>')
-def get_subject(subject_id):
-    for subject in TRACKED_SUBJECTS:
-        if subject["id"] == subject_id:
-            return jsonify(subject)
-    return jsonify({"error": "Subject not found"}), 404
-
-if __name__ == '__main__':
-    # Run only on localhost with port 8080
-    app.run(host='127.0.0.1', port=8080, debug=True)
