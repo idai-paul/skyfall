@@ -27,7 +27,7 @@
     <div class="container-fluid flex-grow-1 d-flex flex-column" style="min-height: 0;">
         <div class="row flex-grow-1">
             <!-- Left Sidebar - Navigation -->
-            <div class="col-md-1 bg-black p-3 sidebar font-monospace">
+            <div class="col-md-1 bg-black p-3 sidebar font-monospace d-flex flex-column">
                 <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
                     <a class="nav-link text-light mb-2" href="{{ url_for('index') }}" role="tab">
                         <i class="fas fa-video"></i>
@@ -61,8 +61,69 @@
                 </div>
             </div>
             
-            <!-- Main Content - Tracked People -->
+            <!-- Main Content - City Map & Tracked People -->
             <div class="col-md-11 p-3 main-content font-monospace">
+                <!-- City Surveillance Map -->
+                <div class="city-map-section mb-4">
+                    <h2 class="h5 border-bottom pb-2 mb-3 mt-2">CITY SURVEILLANCE MAP</h2>
+                    <div class="city-map-container" style="height: 350px;">
+                        <div id="city-map" class="city-map">
+                            <!-- City map visualization using pure HTML/CSS -->
+                            <div class="map-roads">
+                                <!-- Horizontal Roads -->
+                                <div class="road horizontal" style="top: 50px; left: 60px; width: 250px;"></div>
+                                <div class="road horizontal" style="top: 150px; left: 60px; width: 320px;"></div>
+                                <!-- Vertical Roads -->
+                                <div class="road vertical" style="top: 0px; left: 110px; height: 250px;"></div>
+                                <div class="road vertical" style="top: 0px; left: 310px; height: 250px;"></div>
+                                <div class="road vertical" style="top: 0px; left: 380px; height: 150px;"></div>
+                            </div>
+                            <!-- Map Locations -->
+                            <div class="map-locations">
+                                <!-- Central Station -->
+                                <div class="map-location" style="top: 50px; left: 110px;">
+                                    <div class="location-circle">01</div>
+                                    <div class="location-label">Central Station</div>
+                                </div>
+                                <!-- Main Street -->
+                                <div class="map-location" style="top: 50px; left: 310px;">
+                                    <div class="location-circle">04</div>
+                                    <div class="location-label">Main Street</div>
+                                </div>
+                                <!-- Bus Stop -->
+                                <div class="map-location" style="top: 150px; left: 110px;">
+                                    <div class="location-circle">07</div>
+                                    <div class="location-label">Bus Stop</div>
+                                </div>
+                                <!-- City Park -->
+                                <div class="map-location" style="top: 150px; left: 210px;">
+                                    <div class="location-circle">09</div>
+                                    <div class="location-label">City Park</div>
+                                </div>
+                                <!-- Market Square -->
+                                <div class="map-location" style="top: 150px; left: 310px;">
+                                    <div class="location-circle">12</div>
+                                    <div class="location-label">Market Square</div>
+                                </div>
+                            </div>
+                            <!-- Subject Paths -->
+                            <div class="subject-paths">
+                                <!-- Subject #28F4 Path -->
+                                <div class="subject-path" data-subject="28F4">
+                                    <div class="path-line" style="top: 50px; left: 110px; width: 200px; background-color: #FF0000;"></div>
+                                    <div class="path-current-location" style="top: 50px; left: 310px; background-color: #FF0000;"></div>
+                                </div>
+                                <!-- Subject #19A7 Path -->
+                                <div class="subject-path" data-subject="19A7">
+                                    <div class="path-line" style="top: 150px; left: 110px; width: 100px; background-color: #00AAFF;"></div>
+                                    <div class="path-line" style="top: 150px; left: 210px; width: 100px; background-color: #00AAFF;"></div>
+                                    <div class="path-current-location" style="top: 150px; left: 310px; background-color: #00AAFF;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Tracked People List -->
                 <h2 class="h5 border-bottom pb-2 mb-3">TRACKED PEOPLE</h2>
                 
                 <div class="row" id="tracked-subjects-container">
