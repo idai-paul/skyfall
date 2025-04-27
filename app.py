@@ -2,12 +2,28 @@
 Smart City Surveillance System
 """
 
-from flask import Flask, render_template, jsonify, redirect, url_for, request
+from flask import Flask, render_template, jsonify, redirect, url_for, request, send_file
 import os
 import time
 import json
+import threading
+from stream_manager import StreamManager
 
 app = Flask(__name__)
+
+# Initialize the stream manager
+stream_manager = StreamManager()
+
+# Add the 4 YouTube live feeds
+stream_manager.add_stream("CAM-01", "t4Hl35oF7Dg", "Central Station")
+stream_manager.add_stream("CAM-04", "tCubYQP1auE", "Main Street")
+stream_manager.add_stream("CAM-12", "cE0dEMM-e0Q", "Market Square")
+stream_manager.add_stream("CAM-07", "A1-erGqmWDs", "Bus Stop")
+
+# Start the stream manager in a background thread
+stream_thread = threading.Thread(target=stream_manager.start)
+stream_thread.daemon = True
+stream_thread.start()
 
 # Sample data for the tracked subjects
 TRACKED_SUBJECTS = [
@@ -49,25 +65,29 @@ CAMERA_FEEDS = [
         "id": "CAM-01",
         "name": "Central Station",
         "status": "online",
-        "detected_subjects": []
+        "detected_subjects": [],
+        "video_id": "t4Hl35oF7Dg"
     },
     {
         "id": "CAM-04",
         "name": "Main Street",
         "status": "online",
-        "detected_subjects": ["28F4"]
+        "detected_subjects": ["28F4"],
+        "video_id": "tCubYQP1auE"
     },
     {
         "id": "CAM-12",
         "name": "Market Square", 
         "status": "online",
-        "detected_subjects": ["19A7"]
+        "detected_subjects": ["19A7"],
+        "video_id": "cE0dEMM-e0Q"
     },
     {
         "id": "CAM-07",
         "name": "Bus Stop",
         "status": "online",
-        "detected_subjects": []
+        "detected_subjects": [],
+        "video_id": "A1-erGqmWDs"
     }
 ]
 
@@ -81,6 +101,10 @@ SYSTEM_STATUS = {
 # Routes
 @app.route('/')
 def index():
+    # Update camera feeds with stream status
+    for feed in CAMERA_FEEDS:
+        feed["stream_status"] = stream_manager.get_stream_status(feed["id"])
+    
     return render_template('index.html', 
                            tracked_subjects=TRACKED_SUBJECTS,
                            camera_feeds=CAMERA_FEEDS,
@@ -98,6 +122,10 @@ def get_subjects():
 
 @app.route('/api/cameras')
 def get_cameras():
+    # Update camera feeds with stream status
+    for feed in CAMERA_FEEDS:
+        feed["stream_status"] = stream_manager.get_stream_status(feed["id"])
+    
     return jsonify(CAMERA_FEEDS)
 
 @app.route('/api/system')
@@ -111,15 +139,21 @@ def get_subject(subject_id):
             return jsonify(subject)
     return jsonify({"error": "Subject not found"}), 404
 
-# Route to get placeholder video feeds (for future implementation)
+# Route to get the latest video clip for a camera
 @app.route('/api/video/<camera_id>')
 def get_video_feed(camera_id):
-    # In a real implementation, this would stream video from the camera
-    # For now, just return a status message
-    return jsonify({
-        "status": "Video feed not available",
-        "message": f"Placeholder for camera {camera_id} video feed"
-    })
+    # Get the latest clip for this camera
+    latest_clip = stream_manager.get_latest_clip(camera_id)
+    
+    if latest_clip and os.path.exists(latest_clip):
+        # Return the video file
+        return send_file(latest_clip, mimetype='video/mp4')
+    else:
+        # Return a status message if no clip is available
+        return jsonify({
+            "status": "Video feed not available",
+            "message": f"No clip available for camera {camera_id}"
+        }), 404
 
 # Route to handle subject profile updates
 @app.route('/api/subject/<subject_id>/update', methods=['POST'])
@@ -131,6 +165,16 @@ def update_subject(subject_id):
             "status": "success",
             "message": f"Subject {subject_id} updated (placeholder)"
         })
+
+# Cleanup function to stop the stream manager when the app is shutting down
+@app.teardown_appcontext
+def cleanup(exception=None):
+    if exception:
+        # Log the exception
+        app.logger.error(f"Error during cleanup: {exception}")
+    
+    # Stop the stream manager
+    stream_manager.stop()
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080)

@@ -30,11 +30,8 @@ function initializeClock() {
     
     function updateClock() {
         const now = new Date();
-        let hours = now.getHours().toString().padStart(2, '0');
-        let minutes = now.getMinutes().toString().padStart(2, '0');
-        let seconds = now.getSeconds().toString().padStart(2, '0');
-        
-        clockElement.textContent = `${hours}:${minutes}:${seconds}`;
+        const timeString = now.toLocaleTimeString();
+        clockElement.textContent = timeString;
     }
     
     // Update clock immediately and then every second
@@ -303,3 +300,74 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Set up a simple refresh interval
 setInterval(refreshFeeds, 30000); // Refresh every 30 seconds
+
+// Function to update detection boxes
+function updateDetectionBoxes(cameraId, detections) {
+    const detectionBoxesContainer = document.querySelector(`#camera-${cameraId} .detection-boxes`);
+    if (!detectionBoxesContainer) return;
+
+    // Clear existing boxes
+    detectionBoxesContainer.innerHTML = '';
+
+    // Add new boxes
+    detections.forEach(detection => {
+        const box = document.createElement('div');
+        box.className = 'detection-box';
+        box.style.borderColor = detection.color;
+        box.style.left = `${detection.x}%`;
+        box.style.top = `${detection.y}%`;
+        box.style.width = `${detection.width}%`;
+        box.style.height = `${detection.height}%`;
+
+        const label = document.createElement('div');
+        label.className = 'subject-id';
+        label.textContent = `Subject ${detection.subject_id}`;
+        label.style.color = detection.color;
+
+        box.appendChild(label);
+        detectionBoxesContainer.appendChild(box);
+    });
+}
+
+// WebSocket connection for real-time updates
+let ws = null;
+
+function connectWebSocket() {
+    ws = new WebSocket(`ws://${window.location.host}/ws`);
+
+    ws.onopen = () => {
+        console.log('WebSocket connection established');
+    };
+
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'detection') {
+            updateDetectionBoxes(data.camera_id, data.detections);
+        }
+    };
+
+    ws.onclose = () => {
+        console.log('WebSocket connection closed. Reconnecting...');
+        setTimeout(connectWebSocket, 1000);
+    };
+
+    ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+    };
+}
+
+// Connect to WebSocket when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    connectWebSocket();
+});
+
+// Handle video stream errors
+document.querySelectorAll('video').forEach(video => {
+    video.addEventListener('error', (e) => {
+        console.error('Video stream error:', e);
+        const container = video.closest('.video-container');
+        if (container) {
+            container.innerHTML = '<div class="alert alert-danger">Failed to load video stream</div>';
+        }
+    });
+});

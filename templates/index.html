@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart City Surveillance System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -45,19 +46,23 @@
                     </div>
                 </div>
                 <div class="mt-auto">
-                    <h2 class="h5 border-bottom pb-2 mb-3 mt-4">SYSTEM STATUS</h2>
-                    <div class="system-status">
-                        <div class="detail-row">
-                            <span class="detail-label">Cameras:</span>
-                            <span class="detail-value">{{ system_status.cameras }}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Tracked:</span>
-                            <span class="detail-value">{{ system_status.tracked }}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Algorithm:</span>
-                            <span class="detail-value">{{ system_status.algorithm }}</span>
+                    <div class="card bg-dark text-light border-secondary mb-2">
+                        <div class="card-header h5 pb-2 mb-0 mt-2 border-bottom-0">SYSTEM STATUS</div>
+                        <div class="card-body p-2">
+                            <div class="system-status">
+                                <div class="detail-row">
+                                    <span class="detail-label">Cameras:</span>
+                                    <span class="detail-value">{{ system_status.cameras }}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Tracked:</span>
+                                    <span class="detail-value">{{ system_status.tracked }}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Algorithm:</span>
+                                    <span class="detail-value">{{ system_status.algorithm }}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -65,255 +70,212 @@
             
             <!-- Main Content - Camera Feeds & Map -->
             <div class="col-md-6 p-3 main-content font-monospace d-flex flex-column h-100" style="min-width:0;">
-                <!-- Camera Feeds (fixed height) -->
-                <div class="camera-feeds-section" style="flex: 0 0 340px; min-height: 0;">
-                    <h2 class="h5 border-bottom pb-2 mb-3">LIVE CAMERA FEEDS</h2>
-                    <div class="row h-100" id="camera-feeds-container" style="overflow-x: auto;">
-                        <!-- Camera feed cards here -->
-                        <!-- Camera 1 - Central Station -->
-                        <div class="col-md-6 mb-3">
-                            <div class="camera-feed-card">
-                                <div class="camera-header">
-                                    <span>Central Station</span>
-                                    <span class="camera-id">CAM-01</span>
-                                </div>
-                                <div class="camera-feed-placeholder" data-camera-id="CAM-01">
-                                    <!-- Empty placeholder for future video feed -->
-                                    <div class="placeholder-text">
-                                        <i class="fas fa-video placeholder-icon"></i>
-                                        <span>Feed Unavailable</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Camera 2 - Main Street -->
-                        <div class="col-md-6 mb-3">
-                            <div class="camera-feed-card">
-                                <div class="camera-header">
-                                    <span>Main Street</span>
-                                    <span class="camera-id">CAM-04</span>
-                                </div>
-                                <div class="camera-feed-placeholder" data-camera-id="CAM-04">
-                                    <div class="placeholder-text">
-                                        <i class="fas fa-video placeholder-icon"></i>
-                                        <span>Feed Unavailable</span>
-                                    </div>
-                                    <!-- Detection box for subject #28F4 -->
-                                    <div class="detection-box" style="border-color: #FF0000">
-                                        <span class="detection-label" style="color: #FF0000">
-                                            Subject #28F4
+                <div class="card bg-dark text-light border-secondary h-100 d-flex flex-column">
+                    <div class="card-header h5 pb-2 mb-0">LIVE CAMERA FEEDS</div>
+                    <div class="card-body camera-feeds-section d-flex flex-column flex-grow-1" style="min-height: 0;">
+                        <div class="row h-100" id="camera-feeds-container">
+                            {% for camera in camera_feeds %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card bg-dark text-light border-secondary h-100 d-flex flex-column">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <span>{{ camera.name }}</span>
+                                        <span class="badge {% if camera.stream_status == 'active' %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ camera.stream_status }}
                                         </span>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Camera 3 - Market Square -->
-                        <div class="col-md-6 mb-3">
-                            <div class="camera-feed-card">
-                                <div class="camera-header">
-                                    <span>Market Square</span>
-                                    <span class="camera-id">CAM-12</span>
-                                </div>
-                                <div class="camera-feed-placeholder" data-camera-id="CAM-12">
-                                    <div class="placeholder-text">
-                                        <i class="fas fa-video placeholder-icon"></i>
-                                        <span>Feed Unavailable</span>
-                                    </div>
-                                    <!-- Detection box for subject #19A7 -->
-                                    <div class="detection-box" style="border-color: #00AAFF">
-                                        <span class="detection-label" style="color: #00AAFF">
-                                            Subject #19A7
-                                        </span>
+                                    <div class="card-body d-flex flex-column justify-content-center align-items-center flex-grow-1 camera-feed-placeholder" data-camera-id="{{ camera.id }}" style="min-height: 220px;">
+                                        <div class="placeholder-text">
+                                            <i class="fas fa-video placeholder-icon"></i>
+                                            <span>Feed Unavailable</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <!-- Camera 4 - Bus Stop -->
-                        <div class="col-md-6 mb-3">
-                            <div class="camera-feed-card">
-                                <div class="camera-header">
-                                    <span>Bus Stop</span>
-                                    <span class="camera-id">CAM-07</span>
-                                </div>
-                                <div class="camera-feed-placeholder" data-camera-id="CAM-07">
-                                    <div class="placeholder-text">
-                                        <i class="fas fa-video placeholder-icon"></i>
-                                        <span>Feed Unavailable</span>
-                                    </div>
-                                </div>
-                            </div>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
             </div>
             
             <!-- Middle Pane - Person Segmentation + Foreign Matches -->
-            <div class="col-md-3 bg-darker p-3 segmentation-pane font-monospace d-flex flex-column" style="min-height:0;">
-                <div class="person-segmentation-section" style="flex: 1 1 55%; min-height:0; max-height: 340px;">
-                    <h2 class="h5 border-bottom pb-2 mb-2">PERSON SEGMENTATION</h2>
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <div class="camera-location mb-1" style="font-size:0.95rem;">
-                                <span>Main Street (CAM-04)</span>
-                                <span class="timestamp">14:23:01</span>
-                            </div>
-                            <div class="segmentation-display mb-2" style="border-color: #FF0000; height:120px; min-height:unset;">
-                                <div class="segmentation-placeholder" data-subject-id="28F4">
-                                    <div class="silhouette" style="width:60px; height:100px;">
-                                        <div class="silhouette-head" style="width:28px; height:28px;"></div>
-                                        <div class="silhouette-body" style="width:32px; height:60px; margin-top:-6px;"></div>
-                                        <div class="feature-point" style="left: 45%; top: 14%; width:4px; height:4px;"></div>
-                                        <div class="feature-point" style="left: 55%; top: 14%; width:4px; height:4px;"></div>
-                                        <div class="feature-point" style="left: 50%; top: 17%; width:4px; height:4px;"></div>
-                                        <div class="feature-point" style="left: 50%; top: 20%; width:4px; height:4px;"></div>
-                                        <div class="feature-point" style="left: 50%; top: 30%; width:4px; height:4px;"></div>
-                                        <div class="feature-point" style="left: 35%; top: 35%; width:4px; height:4px;"></div>
-                                        <div class="feature-point" style="left: 65%; top: 35%; width:4px; height:4px;"></div>
-                                        <div class="feature-point" style="left: 45%; top: 70%; width:4px; height:4px;"></div>
-                                        <div class="feature-point" style="left: 55%; top: 70%; width:4px; height:4px;"></div>
-                                        <div class="feature-line" style="top: 14%; left: 45%; width: 10%; height: 1px;"></div>
-                                        <div class="feature-line" style="top: 14%; left: 45%; width: 1px; height: 3%; transform: translateX(50%);"></div>
-                                        <div class="feature-line" style="top: 14%; left: 55%; width: 1px; height: 3%; transform: translateX(-50%);"></div>
-                                        <div class="feature-line" style="top: 17%; left: 50%; width: 1px; height: 3%;"></div>
+            <div class="col-md-3 p-3 segmentation-pane font-monospace d-flex flex-column" style="min-height:0;">
+                <div class="card bg-dark text-light border-secondary mb-3" style="height: auto; min-height: 340px;">
+                    <div class="card-header h5 pb-2 mb-0">PERSON SEGMENTATION</div>
+                    <div class="card-body person-segmentation-section" style="height: auto; flex: unset; min-height: 0;">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="p-2 h-100" style="border: 2px solid #444; border-radius: 10px; background: #18191a;">
+                                    <div class="camera-location mb-1" style="font-size:0.95rem;">
+                                        <span>Main Street (CAM-04)</span>
+                                        <span class="timestamp">14:23:01</span>
+                                    </div>
+                                    <div class="segmentation-display mb-2 d-flex justify-content-center" style="border-color: #FF0000; height:120px;">
+                                        <div class="segmentation-placeholder" data-subject-id="28F4">
+                                            <div class="silhouette" style="width:60px; height:100px;">
+                                                <div class="silhouette-head" style="width:28px; height:28px;"></div>
+                                                <div class="silhouette-body" style="width:32px; height:60px; margin-top:-6px;"></div>
+                                                <div class="feature-point" style="left: 45%; top: 14%; width:4px; height:4px;"></div>
+                                                <div class="feature-point" style="left: 55%; top: 14%; width:4px; height:4px;"></div>
+                                                <div class="feature-point" style="left: 50%; top: 17%; width:4px; height:4px;"></div>
+                                                <div class="feature-point" style="left: 50%; top: 20%; width:4px; height:4px;"></div>
+                                                <div class="feature-point" style="left: 50%; top: 30%; width:4px; height:4px;"></div>
+                                                <div class="feature-point" style="left: 35%; top: 35%; width:4px; height:4px;"></div>
+                                                <div class="feature-point" style="left: 65%; top: 35%; width:4px; height:4px;"></div>
+                                                <div class="feature-point" style="left: 45%; top: 70%; width:4px; height:4px;"></div>
+                                                <div class="feature-point" style="left: 55%; top: 70%; width:4px; height:4px;"></div>
+                                                <div class="feature-line" style="top: 14%; left: 45%; width: 10%; height: 1px;"></div>
+                                                <div class="feature-line" style="top: 14%; left: 45%; width: 1px; height: 3%; transform: translateX(50%);"></div>
+                                                <div class="feature-line" style="top: 14%; left: 55%; width: 1px; height: 3%; transform: translateX(-50%);"></div>
+                                                <div class="feature-line" style="top: 17%; left: 50%; width: 1px; height: 3%;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="feature-match-results p-2" style="font-size:0.95rem;">
+                                        <div class="h6 text-danger mb-1" style="font-size:1rem;">Subject #28F4</div>
+                                        <div style="font-size:0.95rem;">Match Confidence: 92%</div>
+                                        <div class="features-detected mt-1">
+                                            <div class="text-muted mb-1" style="font-size:0.85rem;">Features Detected:</div>
+                                            <div class="feature-tags" style="gap:4px;">
+                                                <span class="feature-tag" style="font-size:0.85rem;">Black jacket</span>
+                                                <span class="feature-tag" style="font-size:0.85rem;">Blue cap</span>
+                                                <span class="feature-tag" style="font-size:0.85rem;">Glasses</span>
+                                                <span class="feature-tag" style="font-size:0.85rem;">Beard</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="feature-match-results mb-2 p-2" style="font-size:0.95rem;">
-                                <div class="h6 text-danger mb-1" style="font-size:1rem;">Subject #28F4</div>
-                                <div style="font-size:0.95rem;">Match Confidence: 92%</div>
-                                <div class="features-detected mt-1">
-                                    <div class="text-muted mb-1" style="font-size:0.85rem;">Features Detected:</div>
-                                    <div class="feature-tags" style="gap:4px;">
-                                        <span class="feature-tag" style="font-size:0.85rem;">Black jacket</span>
-                                        <span class="feature-tag" style="font-size:0.85rem;">Blue cap</span>
-                                        <span class="feature-tag" style="font-size:0.85rem;">Glasses</span>
-                                        <span class="feature-tag" style="font-size:0.85rem;">Beard</span>
+                            <div class="col-6">
+                                <div class="p-2 h-100" style="border: 2px solid #444; border-radius: 10px; background: #18191a;">
+                                    <div class="camera-location mb-1" style="font-size:0.95rem;">
+                                        <span>Market Square (CAM-12)</span>
+                                        <span class="timestamp">14:21:47</span>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="camera-location mb-1" style="font-size:0.95rem;">
-                                <span>Market Square (CAM-12)</span>
-                                <span class="timestamp">14:21:47</span>
-                            </div>
-                            <div class="segmentation-display mb-2" style="border-color: #00AAFF; height:120px; min-height:unset;">
-                                <div class="segmentation-placeholder" data-subject-id="19A7">
-                                    <div class="silhouette" style="width:60px; height:100px;">
-                                        <div class="silhouette-head" style="width:28px; height:28px;"></div>
-                                        <div class="silhouette-body" style="width:32px; height:60px; margin-top:-6px;"></div>
-                                        <div class="silhouette-backpack" style="width:18px; height:18px; right:-10px; top:14px;"></div>
-                                        <div class="feature-point blue" style="left: 45%; top: 14%; width:4px; height:4px;"></div>
-                                        <div class="feature-point blue" style="left: 55%; top: 14%; width:4px; height:4px;"></div>
-                                        <div class="feature-point blue" style="left: 50%; top: 17%; width:4px; height:4px;"></div>
-                                        <div class="feature-point blue" style="left: 50%; top: 20%; width:4px; height:4px;"></div>
-                                        <div class="feature-point blue" style="left: 50%; top: 30%; width:4px; height:4px;"></div>
-                                        <div class="feature-point blue" style="left: 35%; top: 35%; width:4px; height:4px;"></div>
-                                        <div class="feature-point blue" style="left: 65%; top: 35%; width:4px; height:4px;"></div>
-                                        <div class="feature-point blue" style="left: 45%; top: 70%; width:4px; height:4px;"></div>
-                                        <div class="feature-point blue" style="left: 55%; top: 70%; width:4px; height:4px;"></div>
-                                        <div class="feature-line blue" style="top: 14%; left: 45%; width: 10%; height: 1px;"></div>
-                                        <div class="feature-line blue" style="top: 14%; left: 45%; width: 1px; height: 3%; transform: translateX(50%);"></div>
-                                        <div class="feature-line blue" style="top: 14%; left: 55%; width: 1px; height: 3%; transform: translateX(-50%);"></div>
-                                        <div class="feature-line blue" style="top: 17%; left: 50%; width: 1px; height: 3%;"></div>
+                                    <div class="segmentation-display mb-2 d-flex justify-content-center" style="border-color: #00AAFF; height:120px;">
+                                        <div class="segmentation-placeholder" data-subject-id="19A7">
+                                            <div class="silhouette" style="width:60px; height:100px;">
+                                                <div class="silhouette-head" style="width:28px; height:28px;"></div>
+                                                <div class="silhouette-body" style="width:32px; height:60px; margin-top:-6px;"></div>
+                                                <div class="silhouette-backpack" style="width:18px; height:18px; right:-10px; top:14px;"></div>
+                                                <div class="feature-point blue" style="left: 45%; top: 14%; width:4px; height:4px;"></div>
+                                                <div class="feature-point blue" style="left: 55%; top: 14%; width:4px; height:4px;"></div>
+                                                <div class="feature-point blue" style="left: 50%; top: 17%; width:4px; height:4px;"></div>
+                                                <div class="feature-point blue" style="left: 50%; top: 20%; width:4px; height:4px;"></div>
+                                                <div class="feature-point blue" style="left: 50%; top: 30%; width:4px; height:4px;"></div>
+                                                <div class="feature-point blue" style="left: 35%; top: 35%; width:4px; height:4px;"></div>
+                                                <div class="feature-point blue" style="left: 65%; top: 35%; width:4px; height:4px;"></div>
+                                                <div class="feature-point blue" style="left: 45%; top: 70%; width:4px; height:4px;"></div>
+                                                <div class="feature-point blue" style="left: 55%; top: 70%; width:4px; height:4px;"></div>
+                                                <div class="feature-line blue" style="top: 14%; left: 45%; width: 10%; height: 1px;"></div>
+                                                <div class="feature-line blue" style="top: 14%; left: 45%; width: 1px; height: 3%; transform: translateX(50%);"></div>
+                                                <div class="feature-line blue" style="top: 14%; left: 55%; width: 1px; height: 3%; transform: translateX(-50%);"></div>
+                                                <div class="feature-line blue" style="top: 17%; left: 50%; width: 1px; height: 3%;"></div>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                            <div class="feature-match-results mb-2 p-2" style="font-size:0.95rem;">
-                                <div class="h6 text-primary mb-1" style="font-size:1rem;">Subject #19A7</div>
-                                <div style="font-size:0.95rem;">Match Confidence: 87%</div>
-                                <div class="features-detected mt-1">
-                                    <div class="text-muted mb-1" style="font-size:0.85rem;">Features Detected:</div>
-                                    <div class="feature-tags" style="gap:4px;">
-                                        <span class="feature-tag" style="font-size:0.85rem;">Red coat</span>
-                                        <span class="feature-tag" style="font-size:0.85rem;">Backpack</span>
-                                        <span class="feature-tag" style="font-size:0.85rem;">Hat</span>
-                                        <span class="feature-tag" style="font-size:0.85rem;">Boots</span>
+                                    <div class="feature-match-results p-2" style="font-size:0.95rem;">
+                                        <div class="h6 text-primary mb-1" style="font-size:1rem;">Subject #19A7</div>
+                                        <div style="font-size:0.95rem;">Match Confidence: 87%</div>
+                                        <div class="features-detected mt-1">
+                                            <div class="text-muted mb-1" style="font-size:0.85rem;">Features Detected:</div>
+                                            <div class="feature-tags" style="gap:4px;">
+                                                <span class="feature-tag" style="font-size:0.85rem;">Red coat</span>
+                                                <span class="feature-tag" style="font-size:0.85rem;">Backpack</span>
+                                                <span class="feature-tag" style="font-size:0.85rem;">Hat</span>
+                                                <span class="feature-tag" style="font-size:0.85rem;">Boots</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="foreign-matches-section mt-4" style="background: #18191a; border: 1px solid #333; border-radius: 8px; padding: 12px 10px 10px 10px; font-family: 'Inter', Arial, sans-serif;">
-                    <h2 class="h6 border-bottom pb-2 mb-3" style="font-family: inherit; font-weight: 600; letter-spacing: 0.03em;">FOREIGN MATCHES</h2>
-                    <div class="foreign-matches-list d-flex flex-column gap-2" style="height: auto;">
-                        <div class="d-flex align-items-center bg-dark border border-secondary rounded px-2 py-2" style="min-height: 60px;">
-                            <img src="https://flagcdn.com/32x24/ru.png" alt="Russia Flag" style="width:32px; height:24px; border-radius:3px; object-fit:cover; margin-right:10px;">
-                            <div style="flex:1 1 0; min-width:0;">
-                                <div style="font-size:1rem; font-weight:600; color:#00bfff; line-height:1;">Russia</div>
-                                <div style="font-size:0.78rem; color:#aaa; line-height:1.2; white-space:normal;">Possible match: Subject seen in Moscow, flagged by Interpol.<br>Last seen: 2 days ago.</div>
+                <div class="card bg-dark text-light border-secondary mb-3" style="height: 340px;">
+                    <div class="card-header h6 pb-2 mb-0">FOREIGN MATCHES</div>
+                    <div class="card-body foreign-matches-section p-0" style="height: 290px; overflow-y: auto;">
+                        <div class="foreign-matches-list d-flex flex-column gap-2" style="height: auto;">
+                            <div class="d-flex align-items-center bg-dark border border-secondary rounded px-2 py-2" style="min-height: 60px;">
+                                <img src="https://flagcdn.com/32x24/ru.png" alt="Russia Flag" style="width:32px; height:24px; border-radius:3px; object-fit:cover; margin-right:10px;">
+                                <div style="flex:1 1 0; min-width:0;">
+                                    <div style="font-size:1rem; font-weight:600; color:#00bfff; line-height:1;">Russia</div>
+                                    <div style="font-size:0.78rem; color:#aaa; line-height:1.2; white-space:normal;">Possible match: Subject seen in Moscow, flagged by Interpol.<br>Last seen: 2 days ago.</div>
+                                </div>
+                                <button class="btn btn-outline-warning btn-sm ms-2 px-3 py-1" style="font-size:0.85rem;">Investigate</button>
                             </div>
-                            <button class="btn btn-outline-warning btn-sm ms-2 px-3 py-1" style="font-size:0.85rem;">Investigate</button>
-                        </div>
-                        <div class="d-flex align-items-center bg-dark border border-secondary rounded px-2 py-2" style="min-height: 60px;">
-                            <img src="https://flagcdn.com/32x24/br.png" alt="Brazil Flag" style="width:32px; height:24px; border-radius:3px; object-fit:cover; margin-right:10px;">
-                            <div style="flex:1 1 0; min-width:0;">
-                                <div style="font-size:1rem; font-weight:600; color:#33cc66; line-height:1;">Brazil</div>
-                                <div style="font-size:0.78rem; color:#aaa; line-height:1.2; white-space:normal;">Possible match: Subject linked to Rio de Janeiro incident.<br>Last seen: 5 days ago.</div>
+                            <div class="d-flex align-items-center bg-dark border border-secondary rounded px-2 py-2" style="min-height: 60px;">
+                                <img src="https://flagcdn.com/32x24/br.png" alt="Brazil Flag" style="width:32px; height:24px; border-radius:3px; object-fit:cover; margin-right:10px;">
+                                <div style="flex:1 1 0; min-width:0;">
+                                    <div style="font-size:1rem; font-weight:600; color:#33cc66; line-height:1;">Brazil</div>
+                                    <div style="font-size:0.78rem; color:#aaa; line-height:1.2; white-space:normal;">Possible match: Subject linked to Rio de Janeiro incident.<br>Last seen: 5 days ago.</div>
+                                </div>
+                                <button class="btn btn-outline-warning btn-sm ms-2 px-3 py-1" style="font-size:0.85rem;">Investigate</button>
                             </div>
-                            <button class="btn btn-outline-warning btn-sm ms-2 px-3 py-1" style="font-size:0.85rem;">Investigate</button>
-                        </div>
-                        <div class="d-flex align-items-center bg-dark border border-secondary rounded px-2 py-2" style="min-height: 60px;">
-                            <img src="https://flagcdn.com/32x24/pk.png" alt="Pakistan Flag" style="width:32px; height:24px; border-radius:3px; object-fit:cover; margin-right:10px;">
-                            <div style="flex:1 1 0; min-width:0;">
-                                <div style="font-size:1rem; font-weight:600; color:#ff4444; line-height:1;">Pakistan</div>
-                                <div style="font-size:0.78rem; color:#aaa; line-height:1.2; white-space:normal;">Possible match: Subject identified in Karachi, under review.<br>Last seen: 1 week ago.</div>
+                            <div class="d-flex align-items-center bg-dark border border-secondary rounded px-2 py-2" style="min-height: 60px;">
+                                <img src="https://flagcdn.com/32x24/pk.png" alt="Pakistan Flag" style="width:32px; height:24px; border-radius:3px; object-fit:cover; margin-right:10px;">
+                                <div style="flex:1 1 0; min-width:0;">
+                                    <div style="font-size:1rem; font-weight:600; color:#ff4444; line-height:1;">Pakistan</div>
+                                    <div style="font-size:0.78rem; color:#aaa; line-height:1.2; white-space:normal;">Possible match: Subject identified in Karachi, under review.<br>Last seen: 1 week ago.</div>
+                                </div>
+                                <button class="btn btn-outline-warning btn-sm ms-2 px-3 py-1" style="font-size:0.85rem;">Investigate</button>
                             </div>
-                            <button class="btn btn-outline-warning btn-sm ms-2 px-3 py-1" style="font-size:0.85rem;">Investigate</button>
                         </div>
                     </div>
                 </div>
             </div>
             
             <!-- Right Sidebar - Person Profile -->
-            <div class="col-md-2 bg-black p-3 sidebar font-monospace d-flex flex-column h-100" id="subject-profile-pane">
-                <h2 class="h5 border-bottom pb-2 mb-3">SUBJECT PROFILE</h2>
-                <div class="profile-scroll flex-grow-1 d-flex flex-column" style="overflow-y:auto; min-height:0;">
-                    <!-- Person Image Placeholder -->
-                    <div class="profile-image-container mb-4">
-                        <div class="profile-image-placeholder">
-                            <div class="profile-silhouette">
-                                <div class="silhouette-head"></div>
-                                <div class="silhouette-body"></div>
+            <div class="col-md-2 p-3 sidebar font-monospace d-flex flex-column h-100" id="subject-profile-pane">
+                <div class="card bg-dark text-light border-secondary h-100">
+                    <div class="card-header h5 pb-2 mb-0">SUBJECT PROFILE</div>
+                    <div class="card-body profile-scroll flex-grow-1 d-flex flex-column" style="overflow-y:auto; min-height:0;">
+                        <!-- Person Image Placeholder -->
+                        <div class="profile-image-container mb-4">
+                            <div class="profile-image-placeholder">
+                                <div class="profile-silhouette">
+                                    <div class="silhouette-head"></div>
+                                    <div class="silhouette-body"></div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <!-- Profile Details -->
-                    <div class="profile-details mb-4" id="profile-summary">
-                        <h3 class="h6 text-danger" id="profile-id">Subject #28F4</h3>
-                        <p id="profile-confidence">Match Confidence: 92%</p>
-                        <hr class="border-secondary">
-                        <div class="detail-row"><span class="detail-label">First Detection:</span><span class="detail-value">14:17:22</span></div>
-                        <div class="detail-row"><span class="detail-label">Total Appearances:</span><span class="detail-value">5</span></div>
-                        <div class="detail-row"><span class="detail-label">Last Location:</span><span class="detail-value">Main Street</span></div>
-                        <div class="detail-row"><span class="detail-label">Est. Age Range:</span><span class="detail-value">35-45</span></div>
-                        <div class="detail-row"><span class="detail-label">Est. Gender:</span><span class="detail-value">Male</span></div>
-                        <div class="detail-row"><span class="detail-label">Est. Height:</span><span class="detail-value">5'10\" (178cm)</span></div>
-                        <div class="detail-row"><span class="detail-label">Recognition Status:</span><span class="detail-value">Confirmed</span></div>
-                        <hr class="border-secondary">
-                        <div class="visual-signatures">
-                            <p class="text-muted mb-1">Visual Signatures:</p>
-                            <div class="feature-tags">
-                                <span class="feature-tag">Black jacket</span>
-                                <span class="feature-tag">Blue cap</span>
-                                <span class="feature-tag">Glasses</span>
-                                <span class="feature-tag">Beard</span>
+                        <!-- Profile Details -->
+                        <div class="profile-details mb-4" id="profile-summary">
+                            <h3 class="h6 text-danger" id="profile-id">Subject #28F4</h3>
+                            <p id="profile-confidence">Match Confidence: 92%</p>
+                            <hr class="border-secondary">
+                            <div class="detail-row"><span class="detail-label">First Detection:</span><span class="detail-value">14:17:22</span></div>
+                            <div class="detail-row"><span class="detail-label">Total Appearances:</span><span class="detail-value">5</span></div>
+                            <div class="detail-row"><span class="detail-label">Last Location:</span><span class="detail-value">Main Street</span></div>
+                            <div class="detail-row"><span class="detail-label">Est. Age Range:</span><span class="detail-value">35-45</span></div>
+                            <div class="detail-row"><span class="detail-label">Est. Gender:</span><span class="detail-value">Male</span></div>
+                            <div class="detail-row"><span class="detail-label">Est. Height:</span><span class="detail-value">5'10\" (178cm)</span></div>
+                            <div class="detail-row"><span class="detail-label">Recognition Status:</span><span class="detail-value">Confirmed</span></div>
+                            <hr class="border-secondary">
+                            <div class="visual-signatures">
+                                <p class="text-muted mb-1">Visual Signatures:</p>
+                                <div class="feature-tags">
+                                    <span class="feature-tag">Black jacket</span>
+                                    <span class="feature-tag">Blue cap</span>
+                                    <span class="feature-tag">Glasses</span>
+                                    <span class="feature-tag">Beard</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <!-- Expandable More Info -->
-                    <div id="profile-more-info" class="mb-4" style="display:none;"></div>
-                    <!-- Actions -->
-                    <div class="action-buttons mb-4">
-                        <button class="btn btn-secondary w-100 mb-2" onclick="addToCase()">Add to Active Case</button>
-                        <button class="btn btn-secondary w-100 mb-2" onclick="startCollection()">Start Persistent Collection</button>
-                        <button class="btn btn-outline-info w-100" onclick="showMoreInfo()">Show More Info</button>
-                    </div>
-                    <!-- External Records -->
-                    <h2 class="h6 border-bottom pb-2 mb-3">EXTERNAL RECORDS</h2>
-                    <div class="external-records-placeholder">
-                        <p class="text-muted text-center">No external records available</p>
+                        <!-- Expandable More Info -->
+                        <div id="profile-more-info" class="mb-4" style="display:none;"></div>
+                        <!-- Actions -->
+                        <div class="action-buttons mb-4">
+                            <button class="btn btn-secondary w-100 mb-2" onclick="addToCase()">Add to Active Case</button>
+                            <button class="btn btn-secondary w-100 mb-2" onclick="startCollection()">Start Persistent Collection</button>
+                            <button class="btn btn-outline-info w-100" onclick="showMoreInfo()">Show More Info</button>
+                        </div>
+                        <!-- External Records -->
+                        <div class="card bg-dark border-secondary mb-2">
+                            <div class="card-header h6 pb-2 mb-0">EXTERNAL RECORDS</div>
+                            <div class="card-body external-records-placeholder">
+                                <p class="text-muted text-center">No external records available</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
